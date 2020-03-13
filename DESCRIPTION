@@ -1,6 +1,6 @@
 Package: springtidesui
 Title: Functions and Shiny app to create a user interface for the Springtides youth mental health epidemiology model.
-Version: 0.0.0.9002
+Version: 0.0.0.9003
 Authors@R: c(
     person(given = "Matthew",family = "Hamilton",email = "matthew.hamilton@orygen.org.au", role = c("aut", "cre"),comment = c(ORCID = "0000-0001-7407-9194")), 
     person(given = "Ruby",family = "Callanan",email = "ruby.callanan@orygen.org.au", role = c("rev")), 
@@ -18,6 +18,7 @@ Imports:
     dplyr,
     knitrBootstrap,
     lubridate,
+    magrittr,
     purrr,
     ready4utils (>= 0.0.0.9069),
     rlang,
@@ -26,8 +27,6 @@ Imports:
     shinyjs,
     shinymanager,
     shinythemes,
-    springtides (>= 0.0.0.9256),
-    stringr
+    springtides (>= 0.0.0.9256)
 Remotes: 
-    orygennp/ready4utils,
-    orygennp/springtides
+    orygennp/ready4utils
