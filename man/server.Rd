@@ -39,7 +39,6 @@ if(interactive()){
  \code{\link[ready4utils]{data_get}}
  \code{\link[stringr]{str_sub}},\code{\link[stringr]{str_replace}}
  \code{\link[lubridate]{is.Date}},\code{\link[lubridate]{as_date}}
- \code{\link[pkgload]{system.file}}
  \code{\link[rmarkdown]{render}},\code{\link[rmarkdown]{pdf_document}},\code{\link[rmarkdown]{word_document}}
  \code{\link[knitrBootstrap]{bootstrap_document}}
 }

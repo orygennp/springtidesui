@@ -21,7 +21,6 @@
 #'  \code{\link[ready4utils]{data_get}}
 #'  \code{\link[stringr]{str_sub}},\code{\link[stringr]{str_replace}}
 #'  \code{\link[lubridate]{is.Date}},\code{\link[lubridate]{as_date}}
-#'  \code{\link[pkgload]{system.file}}
 #'  \code{\link[rmarkdown]{render}},\code{\link[rmarkdown]{pdf_document}},\code{\link[rmarkdown]{word_document}}
 #'  \code{\link[knitrBootstrap]{bootstrap_document}}
 #' @rdname server
@@ -35,7 +34,6 @@
 #' @importFrom ready4utils data_get
 #' @importFrom stringr str_sub str_replace_all
 #' @importFrom lubridate is.Date as_datetime
-#' @importFrom pkgload shim_system.file
 #' @importFrom rmarkdown render pdf_document word_document
 #' @importFrom knitrBootstrap bootstrap_document
 server <- function(input,
@@ -532,7 +530,7 @@ server <- function(input,
     },
     content = function(file) {
       withProgress(message = 'Rendering, please wait!', {
-        src <- pkgload:::shim_system.file("report.Rmd", package = "springtidesui")
+        src <- system.file("report.Rmd", package = "springtidesui")
         temp_dir_chr <- tempdir()
         owd <- setwd(temp_dir_chr)
         on.exit(setwd(owd))
