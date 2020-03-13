@@ -1,0 +1,462 @@
+---
+title: "Test_PART_2"
+author: "Matthew Hamilton"
+date: "12/03/2020"
+output:
+  pdf_document:
+    fig_caption: yes
+  html_document:
+    df_print: paged
+---
+
+```{r echo=F, warning=F, include=F}
+library(magrittr)
+library(kableExtra)
+# library(pander)
+#library(springtides)
+# pander::panderOptions("table.split.table", Inf)
+options(scipen=999)
+
+```
+
+```{r}
+project_data_path_chr <-"C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format" %>% stringr::str_replace("R_Format","Project")
+params_1 <- readRDS(paste0(project_data_path_chr,"/params_4.rds"))
+params_2 <- readRDS(paste0(project_data_path_chr,"/params_5.rds"))
+input_ls_1 <- readRDS(paste0(project_data_path_chr,"/input_ls_4.rds"))
+input_ls_2 <- readRDS(paste0(project_data_path_chr,"/input_ls_5.rds"))
+```
+
+```{r}
+# setdiff(params_1,params_2)
+# setdiff(params_2,params_1)
+# setdiff(input_ls_1,input_ls_2)
+# setdiff(input_ls_2,input_ls_1)
+```
+```{r}
+params <- params_2
+input_ls <- input_ls_2
+params$rendered_by_shiny_lgl <-F
+```
+
+
+```{r, include=F}
+if(params$rendered_by_shiny_lgl)
+  shiny::setProgress(0.2, message = "Step two: Processing geometries (this is usually the longest step)")
+sim_data_r4 <- ready4sim::make_sim_data_env(input_ls = input_ls)
+
+```
+
+```{r}
+# project_data_path_chr <- params$r_data_dir_chr %>% stringr::str_replace("R_Format","Project")
+# saveRDS(input_ls,paste0(project_data_path_chr,"/input_ls_3.rds"))
+# saveRDS(sim_data_r4,paste0(project_data_path_chr,"/sim_data_r4_3.rds"))
+
+```
+
+
+```{r, include=F}
+if(params$rendered_by_shiny_lgl)
+  shiny::setProgress(0.55, message = "Step three: Running simulations")
+sim_results_ls <- ready4sim::runSimulation(x = sim_data_r4,
+                                           n_its_int = input_ls$n_its_int,
+                                           group_by = input_ls$grouping_for_sim)
+if(params$rendered_by_shiny_lgl)
+  shiny::setProgress(0.75, message = "Step four: Rendering report")
+# input_ls <- params$input_ls_chr %>% readRDS()
+# sim_data_r4 <- params$sim_data_r4_chr %>% readRDS()
+# sim_results_ls <- params$sim_results_ls_chr %>% readRDS()
+#options(knitr.table.format = "latex")
+```
+
+```{r}
+#saveRDS(sim_results_ls,paste0(project_data_path_chr,"/sim_results_ls_3.rds"))
+```
+
+
+
+```{r, include=F}
+# project_data_path_chr <-params$r_data_dir_chr %>% stringr::str_replace("R_Format","Project")
+# input_ls <- readRDS(paste0(project_data_path_chr,"/input_ls_3.rds"))
+# sim_data_r4 <- readRDS(paste0(project_data_path_chr,"/sim_data_r4_3.rds"))
+# sim_results_ls <- readRDS(paste0(project_data_path_chr,"/sim_results_ls_3.rds"))
+#input_ls$pa_r4@lookup_tb@sp_abbreviations_lup <- springtides::aus_pa_r4@lookup_tb@sp_abbreviations_lup
+```
+
+```{r, include=F}
+disorder_chr <- params$disorder_chr
+end_year_dbl <- sim_data_r4@model_end_date %>% lubridate::year()
+n_its_int <- input_ls$n_its_int
+start_year_dbl <- sim_data_r4@model_start_date %>% lubridate::year()
+tfd_stat_chr <- springtides::tf_stat_chr(stat_chr = params$stat_chr, disorder_chr = disorder_chr)
+tfd_stat_rate_chr <- springtides::tf_stat_chr(stat_chr = params$stat_chr,disorder_chr = disorder_chr,output_chr = "rate")
+tfd_end_date_chr <- sim_data_r4@model_end_date %>% format("%d %B %Y")
+tfd_start_date_chr <- sim_data_r4@model_start_date %>% format("%d %B %Y")
+```
+
+
+```{r, include=F}
+pdf_output_lgl <- params$pdf_output_lgl
+if(pdf_output_lgl)
+  options(knitr.table.format = "latex")
+meso2_name_chr <- params$meso2_name_chr
+input_tables_ls <- springtides::make_aus_input_tables_ls(input_ls = input_ls,
+                                            sim_data_r4 = sim_data_r4,
+                                            stat_chr = params$stat_chr,
+                                            pdf_output_lgl = pdf_output_lgl)
+y0_prediction_lgl <- springtides::get_prediction_lgl(sim_data_r4 = sim_data_r4,
+                                    input_ls = input_ls)
+output_plots_titles_ls <- springtides::make_output_titles_ls(output_chr = "Figure",
+                                              nbr_dbl_vec = 1:18,
+                                              area_name_chr = meso2_name_chr,
+                                              year_dbl_vec = c(start_year_dbl,
+                                                               end_year_dbl),
+                                              y0_prediction_lgl = y0_prediction_lgl,
+                                              stat_chr = params$stat_chr,
+                                              disorder_chr = disorder_chr,
+                                              age_range_dbl_vec = c(params$age_lower,params$age_upper),
+                                              number_lgl = F)
+output_tbs_titles_ls <- springtides::make_output_titles_ls(output_chr = "Table",
+                                              nbr_dbl_vec = 1:18 + length(input_tables_ls),
+                                              area_name_chr = meso2_name_chr,
+                                              year_dbl_vec = c(start_year_dbl,
+                                                               end_year_dbl),
+                                              y0_prediction_lgl = y0_prediction_lgl ,
+                                              stat_chr = params$stat_chr,
+                                              disorder_chr = disorder_chr,
+                                              age_range_dbl_vec = c(params$age_lower,params$age_upper),
+                                              number_lgl = !pdf_output_lgl)
+output_tables_ls <- springtides::make_output_tables_ls(input_ls = input_ls,
+                                          sim_results_ls = sim_results_ls,
+                                          output_tbs_titles_ls = output_tbs_titles_ls,
+                                          pdf_output_lgl = pdf_output_lgl)
+output_plots_ls <- springtides::make_output_plots_ls(sim_results_ls = sim_results_ls,
+                                sim_data_r4 = sim_data_r4,
+                                input_ls = input_ls,
+                                land_area_type_chr = "STE")
+```
+
+
+
+
+Not for citation or public dissemination.
+
+# Introduction
+## Purpose
+This report summarises a set of predictions about the `r tfd_stat_chr %>% tolower()` in young people aged between `r params$age_lower` and `r params$age_upper` for the `r meso2_name_chr` between `r tfd_start_date_chr` And `r tfd_end_date_chr`. The document also describes some of the key features of the model used to generate these predictions, describes the level of uncertainty associated with the predictions and some of the strengths and limitations of the methods and data sources used in the predictive model.
+
+## About Springtides
+This report has been automatically generated by the development version of the Springtides App. The Springtides App provides a web based user interface to a computer simulation model of youth mental health epidemiology. The Springtides app and simulation model was developed by Orygen in the statistical software R using the readyforwhatsnext open source modelling framework. The source code for both Springtides and readyforwhatsnext is due for public release as R packages later in 2020. Currently, access to these code libraries is by invitation only as testing is currently ongoing. As this report is generated by the development version of the Springtides App, readers of this report are encouraged to cross reference report findings with other data sources and to report any suspected errors to the Springtides development team.
+
+# Methods
+## Overview
+To make the predictions in this report the Springtides app first `r ifelse(params$pa_type_chr!="Predefined boundary","generated","retrieved")` the geometries that describe `r meso2_name_chr`. To speed processing times, these geometries have been simplified to reduce the density of points in each shape, using an algorithm that preserves topology. These geometries are next synthesised with spatial attribute data that includes resident population counts from the most recent census, population projections, mean prediction errors for historic population projections and age and sex `r tfd_stat_rate_chr %>% tolower()` rates for `r disorder_chr %>% stringr::str_replace_all("_"," ")`. These attribute data are summarised at different levels of spatial resolution, which means the area to be profiled is divided into sub-units of varying sizes. Population counts and population projection data are used to predict the future resident population of `r params$age_lower` to `r params$age_upper` year olds by sex for each area sub-unit. Predicted female and male populations for each sub-unit are multiplied by age and sex based `r tfd_stat_rate_chr %>% tolower()` rates for that sub-unit to produce the `r tfd_stat_rate_chr %>% tolower()` predictions, which are then summed to produce a total prediction for `r meso2_name_chr`. To account for uncertainty in population projections and `r tfd_stat_rate_chr %>% tolower()` rate parameters, Springtides repeated this process `r n_its_int` times, each time drawing different values from the probability distributions of these parameters.
+
+## Data sources
+Currently, all input data used by the Springtides model are Australia specific. Most of the input data is freely available on the Internet and released under permissive licensing arrangements. Links to all such open data is included in the tables that summarise model inputs. Some input data were collated by the Springtides development team and collectively form part of the Springtides Replication Dataset. The replication dataset is currently stored in a private online data repository but is due for public release later in 2020.
+
+```{r, include=F}
+pnt_coord_1_chr <- ifelse(params$meso2_type_chr=="HSS",
+                             " and point coordinates of service centre locations (Table 2)",
+                             "")
+pnt_coord_2_chr <- ifelse(params$meso2_type_chr=="HSS"," The point coordinate data relate to the locations of headspace centres across Australia.","")
+```
+
+
+### Geometries
+The geometry data include data on the boundaries of a range of Australian spatial units (Table 1)`r pnt_coord_1_chr`. The boundary data source files are available for download direct from their publisher in the form of ESRI shape files.`r pnt_coord_2_chr`
+
+
+```{r, include=F}
+table_cnt_dbl <-0
+```
+
+```{r, echo=F, warning=F, bootstrap.show.code = FALSE}
+# table_cnt_dbl <- table_cnt_dbl + 1
+input_tables_ls$boundary_input_lup_tb
+
+```
+
+
+```{r, echo=F, warning=F, bootstrap.show.code = FALSE}
+if(input_ls$pa_r4@area_type=="HSS"){
+  # table_cnt_dbl <- table_cnt_dbl +1
+  input_tables_ls$point_crd_input_kb
+}
+```
+
+\pagebreak
+
+### Spatial Attributes
+The sources for the attribute data that were used to generate this report are summarised in Table `r length(input_tables_ls)-1`.
+
+
+```{r, echo=F, warning=F, bootstrap.show.code = FALSE}
+input_tables_ls$attributes_input_kb
+
+```
+
+The values of the epidemiology parameters in the Springtides Replication Dataset along with details about the relevant evidence sources are summarised in Table `r length(input_tables_ls)`.
+
+```{r, echo = F, warning=F}
+#table_cnt_dbl <- table_cnt_dbl + 1
+input_tables_ls$epi_inputs_kb
+
+```
+
+\pagebreak
+
+# Results
+
+```{r, include=F}
+year_0_stat <- ifelse(y0_prediction_lgl ,"predictions","estimates")
+```
+
+## Demographic Results
+The predicted population of `r params$age_lower` to `r params$age_upper` year olds resident in `r meso2_name_chr` is summarised in the following nine tables and nine figures.
+
+```{r, echo=F, message=F}
+output_tables_ls[[1]]
+```
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_1}
+output_plots_ls$Figure_1
+```
+
+\pagebreak
+
+```{r, echo=F, message=F}
+output_tables_ls[[2]]
+```
+
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_2}
+output_plots_ls$Figure_2
+```
+
+\pagebreak
+
+```{r, echo=F, message=F}
+
+output_tables_ls[[3]]
+```
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_3}
+output_plots_ls$Figure_3
+```
+
+\pagebreak
+
+### `r paste0(end_year_dbl, " Resident Population Predictions")`
+
+```{r, echo=F, message=F}
+
+output_tables_ls[[4]]
+```
+
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_4}
+output_plots_ls$Figure_4
+```
+
+\pagebreak
+
+```{r, echo=F, message=F}
+output_tables_ls[[5]]
+```
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_5}
+output_plots_ls$Figure_5
+```
+
+\pagebreak
+
+```{r, echo=F, message=F}
+output_tables_ls[[6]]
+```
+
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_6}
+output_plots_ls$Figure_6
+```
+
+\pagebreak
+
+### `r paste0("Predicted Change in Resident Population Between ", start_year_dbl, " and ",end_year_dbl)`
+
+```{r, echo=F, message=F}
+output_tables_ls[[7]]
+```
+
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_7}
+output_plots_ls$Figure_7
+```
+
+
+\pagebreak
+
+```{r, echo=F, message=F}
+output_tables_ls[[8]]
+```
+
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_8}
+output_plots_ls$Figure_8
+```
+
+\pagebreak
+
+```{r, echo=F, message=F}
+output_tables_ls[[9]]
+```
+
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_9}
+output_plots_ls$Figure_9
+```
+
+\pagebreak
+
+## `r tfd_stat_chr` Results
+The predicted `r tfd_stat_chr %>% tolower()` amongst `r params$age_lower` to `r params$age_upper` year olds resident in `r meso2_name_chr` is summarised in the next nine tables and nine figures.
+
+### `r paste0(start_year_dbl," ",tfd_stat_chr, " Predictions")`
+
+```{r, echo=F, message=F}
+output_tables_ls[[10]]
+```
+
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_10}
+output_plots_ls$Figure_10
+```
+
+\pagebreak
+
+```{r, echo=F, message=F}
+output_tables_ls[[11]]
+```
+
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_11}
+output_plots_ls$Figure_11
+```
+
+\pagebreak
+
+```{r, echo=F, message=F}
+output_tables_ls[[12]]
+```
+
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_12}
+output_plots_ls$Figure_12
+```
+
+\pagebreak
+
+### `r paste0(end_year_dbl," ",tfd_stat_chr, " Predictions")`
+
+```{r, echo=F, message=F}
+
+output_tables_ls[[13]]
+
+```
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_13}
+
+output_plots_ls$Figure_13
+
+```
+
+\pagebreak
+
+```{r, echo=F, message=F}
+
+output_tables_ls[[14]]
+
+```
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_14}
+
+output_plots_ls$Figure_14
+
+```
+
+\pagebreak
+
+```{r, echo=F, message=F}
+
+output_tables_ls[[15]]
+
+```
+
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_15}
+output_plots_ls$Figure_15
+```
+
+\pagebreak
+
+### `r paste0("Predicted Change in "," ",tfd_stat_chr," Between ", start_year_dbl, " and ",end_year_dbl)`
+
+```{r, echo=F, message=F}
+
+output_tables_ls[[16]]
+
+```
+
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_16}
+
+output_plots_ls$Figure_16
+
+```
+
+\pagebreak
+
+```{r, echo=F, message=F}
+
+output_tables_ls[[17]]
+
+```
+
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_17}
+
+output_plots_ls$Figure_17
+
+```
+
+\pagebreak
+
+```{r, echo=F, message=F}
+
+output_tables_ls[[18]]
+
+```
+
+
+```{r, echo=F, message=F, fig.cap=output_plots_titles_ls$Figure_18}
+
+output_plots_ls$Figure_18
+
+```
+
+\pagebreak
+
+# Discussion
+The results presented in this report are the result of the synthesis of Australian geometry and attribute data. Strengths of the approach implemented by the Springtides App in generating this report is the relevance of the input data to the Australian context and using the highest available resolution for each spatial attribute data type. However, there are also a number of limitations that users of this report should bear in mind when interpreting report results.
+
+First and most importantly, this report is produced by a development version of the Springtides App, which means both the application and its underlying model are only partially verified and validated. An updated version of the Springtides App will be released once user testing, code and input data verification and validation checks have been completed. Secondly, epidemiology estimates are currently based on age and sex predictors only. Area attributes such as urbanicity and socioeconomic status will be added to the predictors in a forthcoming development version release. Thirdly, uncertainty is only partially explored. Some input parameters currently only have deterministic values and to conserve computing resources we have restricted Springtides App users to running a maximum of 100 iterations of each simulation. We will be shortly addressing each of these constraints in a forthcoming development release as well as providing opportunities to explore structural uncertainty through selection of alternative evidence sources for a number of model parameters.
+
+# Contact
+You can help improve the Springtides App by reporting any suspected errors or providing usability feedback to the Springtides development team. Email: matthew.hamilton@orygen.org.au
+
+```{r, include=F}
+if(params$rendered_by_shiny_lgl)
+  shiny::setProgress(1, message = "Step five: Wrap up")
+```
+
+

@@ -1,0 +1,728 @@
+#' @title server
+#' @description FUNCTION_DESCRIPTION
+#' @param input PARAM_DESCRIPTION
+#' @param output PARAM_DESCRIPTION
+#' @param session PARAM_DESCRIPTION
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @seealso
+#'  \code{\link[springtides]{aus_pa_r4}},\code{\link[springtides]{c("get_input_vec", "get_input_vec")}},\code{\link[springtides]{c("get_disorder_choices_chr_vec", "get_disorder_choices_chr_vec")}},\code{\link[springtides]{c("get_age_range_choices_int_vec", "get_age_range_choices_int_vec")}},\code{\link[springtides]{c("make_area_name_chr", "make_area_name_chr")}},\code{\link[springtides]{c("tf_stat_chr", "tf_stat_chr")}}
+#'  \code{\link[shiny]{reactiveValues}},\code{\link[shiny]{updateTabsetPanel}},\code{\link[shiny]{observeEvent}},\code{\link[shiny]{observe}},\code{\link[shiny]{reactive}},\code{\link[shiny]{renderUI}},\code{\link[shiny]{tag}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{checkboxGroupInput}},\code{\link[shiny]{actionButton}},\code{\link[shiny]{dateRangeInput}},\code{\link[shiny]{validate}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{HTML}},\code{\link[shiny]{downloadHandler}}
+#'  \code{\link[shinyjs]{visibilityFuncs}}
+#'  \code{\link[dplyr]{filter}},\code{\link[dplyr]{pull}}
+#'  \code{\link[purrr]{reduce}},\code{\link[purrr]{map}}
+#'  \code{\link[rlang]{sym}}
+#'  \code{\link[ready4utils]{data_get}}
+#'  \code{\link[stringr]{str_sub}},\code{\link[stringr]{str_replace}}
+#'  \code{\link[lubridate]{is.Date}},\code{\link[lubridate]{as_date}}
+#'  \code{\link[pkgload]{system.file}}
+#'  \code{\link[rmarkdown]{render}},\code{\link[rmarkdown]{pdf_document}},\code{\link[rmarkdown]{word_document}}
+#'  \code{\link[knitrBootstrap]{bootstrap_document}}
+#' @rdname server
+#' @export
+#' @importFrom springtides aus_pa_r4 get_input_vec get_disorder_choices_chr_vec get_age_range_choices_int_vec make_area_name_chr tf_stat_chr
+#' @importFrom shiny reactiveValues updateTabsetPanel observeEvent observe reactive renderUI tagList selectInput h3 checkboxGroupInput actionButton dateRangeInput validate need sliderInput h1 p HTML downloadHandler
+#' @importFrom shinyjs hide show
+#' @importFrom dplyr filter pull
+#' @importFrom purrr reduce map_chr
+#' @importFrom rlang sym
+#' @importFrom ready4utils data_get
+#' @importFrom stringr str_sub str_replace_all
+#' @importFrom lubridate is.Date as_datetime
+#' @importFrom pkgload shim_system.file
+#' @importFrom rmarkdown render pdf_document word_document
+#' @importFrom knitrBootstrap bootstrap_document
+server <- function(input,
+                   output,
+                   session) {
+  pa_r4 <- springtides::aus_pa_r4
+  reactive_ls <- shiny::reactiveValues()
+  shiny::updateTabsetPanel(session,inputId = "tabs", selected = "geom_type")
+  shiny::observeEvent(input$confirmWhere1, {
+    reactive_ls$pa_type_chr <- input$pa_type_chr
+    shinyjs::hide(selector = '#tabs li a[data-value="geom_type"]')
+    shinyjs::show(selector = '#tabs li a[data-value="ft_type"]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",selected = "ft_type")
+  })
+  shiny::observeEvent(input$returnToWhere1, {
+    shinyjs::hide(selector = '#tabs li a[data-value="ft_type"]')
+    shinyjs::show(selector = '#tabs li a[data-value="geom_type"]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",selected = "geom_type")
+  })
+  shiny::observeEvent(input$confirmYear, {
+    bnd_sf <- readRDS(reactive_ls$meso2_choices_ls$meso2_type_tb %>%
+                        dplyr::filter(area_bound_yr == input$meso2_bound_yr) %>%
+                        dplyr::pull(source_reference) %>%
+                        paste0(r_data_dir_chr,
+                               "/",
+                               .,".rds"
+                        )
+    ) %>%
+      filter_if_var_exists(var_chr = "STE_NAME16",
+                           var_val_xxx = "Other Territories",
+                           cond_chr = "!=") %>%
+      purrr::reduce(c("2899","6798","6799","7151"),
+                    .init = .,
+                    ~ .x %>% filter_if_var_exists(var_chr = "POA_NAME",
+                                                  var_val_xxx = .y,
+                                                  cond_chr = "!=")) %>%
+      purrr::reduce(c("2899","6798","6799","7151"),
+                    .init = .,
+                    ~ .x %>% filter_if_var_exists(var_chr = "POA_NAME16",
+                                                  var_val_xxx = .y,
+                                                  cond_chr = "!="))
+
+    reactive_ls$meso2_chr_choices_vec <- bnd_sf  %>%
+      dplyr::pull(!!rlang::sym(reactive_ls$meso2_choices_ls$meso2_uid_tb %>%
+                                 dplyr::filter(year == input$meso2_bound_yr) %>%
+                                 dplyr::pull(var_name))) %>%
+      sort()
+    if(ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+                             lookup_variable = "long_name",
+                             lookup_reference = input$meso2_type_chr,
+                             target_variable = "short_name",
+                             evaluate = F) %in% (pa_r4@lookup_tb@sp_resolution_lup %>%
+                                                 dplyr::filter(area_count >800) %>%
+                                                 dplyr::pull(area_type) %>%
+                                                 unique())){
+      reactive_ls$meso2_filter_choices_chr_vec <- reactive_ls$meso2_chr_choices_vec %>%
+        stringr::str_sub(start=1,end=1) %>%
+        unique() %>%
+        sort()
+    }else{
+      reactive_ls$meso2_filter_choices_chr_vec <- NULL
+    }
+    shinyjs::hide(selector = '#tabs li a[data-value="bound_yr"]')
+    shinyjs::show(selector = '#tabs li a[data-value="ft_value"]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",
+                             selected = "ft_value"
+    )
+  })
+  shiny::observeEvent(input$returnToWhere2, {
+    shinyjs::hide(selector = '#tabs li a[data-value="bound_yr"]')
+    shinyjs::show(selector = '#tabs li a[data-value="ft_type""]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",selected = "ft_type")
+    reactive_ls$meso2_choices_ls <- NULL
+    reactive_ls$meso2_bound_yr <- NULL
+  })
+  shiny::observeEvent(input$confirmWhere2, {
+    if(is.null(reactive_ls$pa_type_chr)){
+      test_lgl <- F
+    }else{
+      test_lgl <- input$pa_type_chr=="HSS"
+    }
+    if(!test_lgl){
+      meso2_type_tb <- pa_r4@lookup_tb@sp_data_pack_lup %>%
+        dplyr::filter(main_feature == "Boundary") %>%
+        dplyr::filter(area_type == input$meso2_type_chr %>% #reactive_ls$meso2_type_chr %>%
+                        ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+                                              lookup_variable = "long_name",
+                                              lookup_reference = .,
+                                              target_variable = "short_name",
+                                              evaluate = F))
+      meso2_bound_yr_chr_vec <- meso2_type_tb %>%
+        dplyr::pull(area_bound_yr) %>%
+        unique() %>%
+        sort()
+      meso2_uid_tb <- pa_r4@lookup_tb@sp_uid_lup %>%
+        dplyr::filter(spatial_unit == input$meso2_type_chr %>% #reactive_ls$meso2_type_chr %>%
+                        ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+                                              lookup_variable = "long_name",
+                                              lookup_reference = .,
+                                              target_variable = "short_name",
+                                              evaluate = F))
+      reactive_ls$meso2_choices_ls <- list(meso2_type_tb = meso2_type_tb,
+                                           meso2_bound_yr_chr_vec = meso2_bound_yr_chr_vec,
+                                           meso2_uid_tb = meso2_uid_tb)
+    }
+    shinyjs::hide(selector = '#tabs li a[data-value="ft_type"]')
+    shinyjs::show(selector = paste0('#tabs li a[data-value="',
+                                    ifelse(test_lgl,'ft_value','bound_yr'),
+                                    '"]'))
+    shiny::updateTabsetPanel(session,inputId = "tabs",
+                             selected = ifelse(test_lgl,"ft_value","bound_yr"))
+  })
+  shiny::observeEvent(input$returnToWhere2_2, {
+    if(is.null(reactive_ls$pa_type_chr))
+      test_lgl <- F
+    else
+      test_lgl <- input$pa_type_chr=="HSS"
+    shinyjs::hide(selector = '#tabs li a[data-value="ft_value"]')
+    shinyjs::show(selector = paste0('#tabs li a[data-value="',
+                                    ifelse(test_lgl,'ft_type','bound_yr'),
+                                    '"]'))
+    shiny::updateTabsetPanel(session,inputId = "tabs",
+                             selected = ifelse(test_lgl,"ft_type","bound_yr"))
+    shiny::updateTabsetPanel(session,inputId = "tabs",selected = "ft_type")
+    reactive_ls$meso2_choices_ls <- NULL
+    reactive_ls$meso2_bound_yr <- NULL
+    reactive_ls$meso2_first_chr <- NULL
+    reactive_ls$meso2_chr_choices_vec <- NULL
+  })
+
+  shiny::observeEvent(input$confirmWhere3, {
+    shinyjs::hide(selector = '#tabs li a[data-value="ft_value"]')
+    shinyjs::show(selector = '#tabs li a[data-value="pred_yr"]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",selected = "pred_yr")
+  })
+  shiny::observeEvent(input$returnToWhere, {
+    shinyjs::hide(selector = '#tabs li a[data-value="pred_yr"]')
+    shinyjs::show(selector = '#tabs li a[data-value="geom_type"]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",selected = "geom_type")
+    reactive_ls$meso2_choices_ls <- NULL
+    reactive_ls$meso2_bound_yr <- NULL
+    reactive_ls$meso2_chr_choices_vec <- NULL
+    reactive_ls$meso2_first_chr <- NULL
+  })
+  shiny::observeEvent(input$confirmWhen, {
+    shinyjs::hide(selector = '#tabs li a[data-value="pred_yr"]')
+    shinyjs::show(selector = '#tabs li a[data-value="stat_type"]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",selected = "stat_type")
+  })
+  shiny::observeEvent(input$returnToWhen, {
+    shinyjs::hide(selector = '#tabs li a[data-value="stat_type"]')
+    shinyjs::show(selector = '#tabs li a[data-value="pred_yr"]')
+    updateTabsetPanel(session,inputId = "tabs",selected = "pred_yr")
+  })
+  shiny::observeEvent(input$confirmWhat, {
+    shinyjs::hide(selector = '#tabs li a[data-value="stat_type"]')
+    shinyjs::show(selector = '#tabs li a[data-value="population"]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",selected = "population")
+  })
+  shiny::observeEvent(input$returnToWhat, {
+    shinyjs::hide(selector = '#tabs li a[data-value="population"]')
+    shinyjs::show(selector = '#tabs li a[data-value="stat_type"]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",selected = "stat_type")
+  })
+  shiny::observeEvent(input$confirmWho, {
+    shinyjs::hide(selector = '#tabs li a[data-value="population"]')
+    shinyjs::show(selector = '#tabs li a[data-value="review"]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",selected = "review")
+  })
+  shiny::observeEvent(input$returnToWho, {
+    shinyjs::hide(selector = '#tabs li a[data-value="review"]')
+    shinyjs::show(selector = '#tabs li a[data-value="population"]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",selected = "population")
+  })
+  shiny::observeEvent(input$confirmAll, {
+    shinyjs::hide(selector = '#tabs li a[data-value="review"]')
+    shinyjs::show(selector = '#tabs li a[data-value="make_rpt"]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",selected = "make_rpt")
+  })
+  shiny::observeEvent(input$startAgain, {
+    shinyjs::hide(selector = '#tabs li a[data-value="make_rpt"]')
+    shinyjs::show(selector = '#tabs li a[data-value="geom_type"]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",selected = "geom_type")
+  })
+  shiny::observe({
+    if(is.null(input$meso2_bound_yr)){
+      reactive_ls$meso2_bound_yr <- NULL
+    }else{
+      reactive_ls$meso2_bound_yr <- input$meso2_bound_yr
+    }
+  })
+  shiny::observe({
+    if(is.null(input$meso2_first_chr)){
+      reactive_ls$meso2_first_chr <- NULL
+    }else{
+      reactive_ls$meso2_first_chr <- input$meso2_first_chr
+    }
+  })
+  shiny::observe({
+    if(is.null(input$stat_chr)){
+      reactive_ls$disorder_choices_vec <- NULL
+    }else{
+      reactive_ls$disorder_choices_vec <- springtides::get_input_vec(fn = springtides::get_disorder_choices_chr_vec,
+                                                                     args = list(lup_r4 = pa_r4@lookup_tb,
+                                                                                 path_to_data_chr = r_data_dir_chr,
+                                                                                 stat_chr = input$stat_chr,
+                                                                                 sex_chr_vec = c("Female","Male")),
+                                                                     n = Inf) %>% stringr::str_replace_all("_"," ") %>%
+        sort()
+    }
+  })
+  shiny::observe({
+    print(input$tabs)
+  })
+  getTabIndex <- shiny::reactive({
+    match(input$tabs,
+          c("about_springtides","geom_type","ft_type","bound_yr","ft_value","pred_yr","stat_type","population","review","make_rpt"))
+  })
+  output$predefinedControls <- shiny::renderUI({
+    if(input$pa_type_chr !="Predefined boundary")
+      return()
+    shiny::tagList(
+      shiny::selectInput("meso2_type_chr",
+                         shiny::h3("Spatial unit"),
+                         choices = pa_r4@lookup_tb@sp_data_pack_lup %>%
+                           dplyr::filter(main_feature == "Boundary") %>%
+                           dplyr::filter(!area_type %in% c("AUS","HSS","SA1","SA2","XX1")) %>%
+                           dplyr::pull(area_type) %>%
+                           unique() %>%
+                           purrr::map_chr(~ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+                                                                 lookup_variable = "short_name",
+                                                                 lookup_reference = .x,
+                                                                 target_variable = "long_name",
+                                                                 evaluate = F)) %>%
+                           sort())
+    )
+  })
+  output$boundYearControls <- shiny::renderUI({
+    if(is.null(reactive_ls$meso2_choices_ls))
+      return()
+    shiny::tagList(
+      shiny::selectInput("meso2_bound_yr", h3("Boundary year"),
+                         choices = reactive_ls$meso2_choices_ls$meso2_bound_yr_chr_vec)
+
+    )
+  })
+  output$areaFilterControls <- shiny::renderUI({
+    if(input$pa_type_chr !="Predefined boundary"| is.null(reactive_ls$meso2_filter_choices_chr_vec))
+      return()
+    shiny::tagList(
+      shiny::selectInput("meso2_first_chr", h3(ifelse(input$meso2_type_chr == "Postal Area",
+                                                      paste0("First digit of ",input$meso2_type_chr),
+                                                      paste0("First letter of ",input$meso2_type_chr))),
+                         choices = reactive_ls$meso2_filter_choices_chr_vec)
+
+    )
+  })
+  output$areaControls <- shiny::renderUI({
+    if(input$pa_type_chr !="Predefined boundary" | is.null(reactive_ls$meso2_chr_choices_vec))
+      return()
+    shiny::tagList(
+      shiny::selectInput("meso2_chr", h3("Feature"),
+                         choices = reactive_ls$meso2_chr_choices_vec %>%
+                           subset_vec_if_var_exists(var_val_chr = input$meso2_first_chr,
+                                                    fn = startsWith)
+      )
+
+    )
+  })
+  output$headspaceControls <- shiny::renderUI({
+    if(input$pa_type_chr !="HSS")
+      return()
+    shiny::tagList(
+      shiny::checkboxGroupInput("micro_chr_vec", "Headspace Centres",
+                                choices = pa_r4@lookup_tb@sp_site_coord_lup %>%
+                                  dplyr::pull(service_name) %>% unique() %>% sort(),
+                                inline = T))
+  })
+  output$conditionalGeomFt1Nav <- shiny::renderUI({
+    if(input$pa_type_chr=="HSS" & length(input$micro_chr_vec) == 0)
+      return()
+    shiny::tagList(
+      shiny::actionButton("confirmWhere2", paste0("Confirm selection of ",
+                                                  ifelse(input$pa_type_chr=="HSS",
+                                                         "headspace centres",
+                                                         "spatial unit"),
+                                                  "  -->>"))
+    )
+  })
+  output$when_controls <- shiny::renderUI({
+    if(input$pa_type_chr=="HSS" & length(input$micro_chr_vec) == 0)
+      return()
+    shiny::tagList(
+      shiny::dateRangeInput('dateRange',
+                            label = 'Start and end dates (yyyy-mm-dd)',
+                            start = pa_r4@temporal_min,
+                            end = Sys.Date(),
+                            min = pa_r4@temporal_min,
+                            max = pa_r4@temporal_max
+      )
+    )
+  })
+  confirmWhenButtonText <- shiny::reactive({
+    shiny::validate(
+      shiny::need(input$dateRange[1] < input$dateRange[2], "End date needs to be later than start date."),
+      shiny::need(!is.null(input$dateRange[1]), "Start date needs to be a valid date but is currently empty."),
+      shiny::need(lubridate::is.Date(input$dateRange[1]), "Start date needs to be a valid date."),
+      shiny::need(!is.null(input$dateRange[2]), "End date needs to be a valid date but is currently empty."),
+      shiny::need(lubridate::is.Date(input$dateRange[2]), "End date needs to be a valid date.")
+    )
+    "Confirm the prediction years -->>"
+  })
+  output$confirm_when_controls <- shiny::renderUI({
+    shiny::tagList(
+      shiny::actionButton("confirmWhen", confirmWhenButtonText())
+    )
+  })
+  output$disorderControls <- shiny::renderUI({
+    shiny::tagList(shiny::selectInput("disorder_chr",
+                                      shiny::h3("Disorder or behaviour"),
+                                      choices = reactive_ls$disorder_choices_vec))
+  })
+  output$ageRangeControls <- shiny::renderUI({
+    if(is.null(input$disorder_chr))
+      return()
+    age_vec <- springtides::get_age_range_choices_int_vec(lup_r4 = pa_r4@lookup_tb,
+                                                          path_to_data_chr = r_data_dir_chr,
+                                                          stat_chr = input$stat_chr,
+                                                          disorder_chr = input$disorder_chr %>%
+                                                            stringr::str_replace_all(" ","_"))
+    shiny::tagList(
+      shiny::sliderInput("age_range_int_vec",
+                         shiny::h3("Age range"),
+                         min = min(age_vec), max = max(age_vec), value = age_vec))
+  })
+  output$about_chr <- shiny::renderUI({
+    if(getTabIndex()==1){
+      h1_chr <- shiny::h1("Welcome")
+      p1_chr <- shiny::p("Thank you for your interest in Springtides, The Youth Mental Health Epi App.")
+      p2_chr <- shiny::p("Copyright Orygen 2018-2020")
+      shiny::HTML(paste0(h1_chr,p1_chr,p2_chr))
+    }else{
+      return()
+    }
+  })
+  output$welcome_chr <- shiny::renderUI({
+    if(getTabIndex()==2){
+      h1_chr <- shiny::h1("Where?")
+      p2_chr <- shiny::p("To get started, you first need to specify the area for which you would like to generate an epidemiological profile. You can either select an area for which there are existing geometries or alternatively generate a geometry that defines your own custom area.")
+      shiny::HTML(paste0(h1_chr,p2_chr))
+    }else{
+      return()
+    }
+  })
+  output$selected_pa_type_chr <- shiny::renderUI({
+    if(getTabIndex()<3)
+      return()
+    h1_chr <- shiny::h1("Where?")
+    p1_chr <- shiny::p(paste0("You have opted ", ifelse(input$pa_type_chr=="Predefined boundary","to use an existing boundary.","to define your own custom boundaries.")))
+    shiny::HTML(paste0(h1_chr,p1_chr))
+  })
+  output$ft_select_chr <- shiny::renderUI({
+    if(getTabIndex()!=3 | !input$pa_type_chr %in% c("Predefined boundary","HSS"))
+      return()
+    if(input$pa_type_chr=="Predefined boundary")
+      text_chr <- "Now select the spatial unit that you would like to use."
+    if(input$pa_type_chr=="HSS")
+      text_chr <- "You can create custom boundaries based on proximity to the headspace centres you select. It is recommended that you select centres that are reasonably close together (e.g. within the same or neighbouring PHNs) as larger geographic areas produce lower resolution results plots."
+    shiny::p(text_chr)
+  })
+  output$selected_ft_type_chr <- shiny::renderUI({
+    if(getTabIndex()<4 | !input$pa_type_chr %in% c("Predefined boundary","HSS"))
+      return()
+    if(input$pa_type_chr=="Predefined boundary")
+      text_chr <- paste0("The spatial unit that you have selected is ",
+                         input$meso2_type_chr,
+                         ".")
+    if(input$pa_type_chr=="HSS")
+      text_chr <-paste0("Your custom boundary will be based on proximity to the following headspace centre",
+                        ifelse(length(input$micro_chr_vec)>1,"s: ",": "), input$micro_chr_vec %>% paste(collapse = ', '),".")
+    shiny::p(text_chr)
+
+  })
+  output$bound_yr_select_chr <- shiny::renderUI({
+    if(getTabIndex()!=4 | !input$pa_type_chr %in% c("Predefined boundary"))
+      return()
+    if(input$pa_type_chr=="Predefined boundary")
+      text_chr <- "Now select the spatial unit boundary year."
+    shiny::p(text_chr)
+  })
+  output$selected_bound_yr_chr <- shiny::renderUI({
+    if(getTabIndex()<5 | !input$pa_type_chr %in% c("Predefined boundary"))
+      return()
+    if(input$pa_type_chr=="Predefined boundary")
+      text_chr <- paste0("The version of those boundaries are those published in ",
+                         input$meso2_bound_yr,
+                         ".")
+    shiny::p(text_chr)
+  })
+  output$ft_value_select_chr <- shiny::renderUI({
+    if(getTabIndex()!=5 | !input$pa_type_chr %in% c("Predefined boundary","HSS"))
+      return()
+    if(input$pa_type_chr=="Predefined boundary")
+      text_chr <- "Now select the feature that you wish to profile."
+    if(input$pa_type_chr=="HSS")
+      text_chr <- "Now select the type of proximity measure and the upper bound to that proximity. PLEASE NOTE: The drive time proximity relies upon an external service provider which is currently only intermittently available. Simulations run with this option selected frequently fail to execute successfully."
+    shiny::p(text_chr)
+  })
+  output$selected_ft_values_chr <- shiny::renderUI({
+    if(getTabIndex()<6 | !input$pa_type_chr %in% c("Predefined boundary","HSS"))
+      return()
+    if(input$pa_type_chr=="Predefined boundary")
+      text_chr <- paste0("The selected feature is ",
+                         input$meso2_chr,
+                         ".")
+    if(input$pa_type_chr=="HSS")
+      text_chr <- paste0("The proximity is based on ",
+                         input$gdist_ttime_chr %>% tolower(),
+                         " with the upper bound on distance being ",
+                         ifelse(input$gdist_ttime_chr=="Geometric distance",
+                                paste0(input$gdist_dbl, " kilometers."),
+                                paste0(input$ttime_dbl, " minutes drive.")))
+    shiny::p(text_chr)
+  })
+  output$when_heading_chr <- shiny::renderUI({
+    if(getTabIndex()<6)
+      return()
+    shiny::h1("When?")
+  })
+  output$when_instr_chr <- shiny::renderUI({
+    if(getTabIndex()!=6)
+      return()
+    shiny::p("Now select the year for which you would like to generate a prediction. The predictions for this year will be compared to predictions for the most recent census year.")
+  })
+  output$when_selected_chr <- shiny::renderUI({
+    if(getTabIndex()<7)
+      return()
+    shiny::p(paste0("The dates for which results will be predicted are ",
+                    input$dateRange[1] %>% format("%d %B %Y"),
+                    " to ",
+                    input$dateRange[2] %>% format("%d %B %Y"),
+                    "."))
+  })
+  output$what_heading_chr <- shiny::renderUI({
+    if(getTabIndex()<7)
+      return()
+    shiny::h1("What?")
+  })
+  output$what_instr_chr <- shiny::renderUI({
+    if(getTabIndex()!=7)
+      return()
+    shiny::p("Now select the main statistic and associated level of uncertainty that you would like to generate.")
+  })
+  output$what_selected_chr <- shiny::renderUI({
+    if(getTabIndex()<8)
+      return()
+    shiny::p(paste0("The main statistic to be generated is ",
+                    input$stat_chr,
+                    ", with an uncertainty interval of ",
+                    input$uncertainty_int[1] * 100,
+                    "% to ",
+                    input$uncertainty_int[2] * 100,
+                    "% that will be based on ",
+                    input$n_its_int,
+                    " simulation iterations."))
+  })
+  output$who_heading_chr <- shiny::renderUI({
+    if(getTabIndex()<8)
+      return()
+    shiny::h1("Who?")
+  })
+  output$who_instr_chr <- shiny::renderUI({
+    if(getTabIndex()!=9)
+      return()
+    shiny::p("Now select the disorder or behaviour and age range of the population that you would like to profile.")
+  })
+  output$who_selected_chr <- shiny::renderUI({
+    if(getTabIndex()<9)
+      return()
+    shiny::p(paste0("The population to be profiled are young people with ",
+                    input$disorder_chr," who are aged between ",
+                    input$age_range_int_vec[1],
+                    " and ",
+                    input$age_range_int_vec[2],
+                    "."))
+
+  })
+  output$report <- shiny::downloadHandler(
+    filename = function() {
+      paste('Springtides_Report', sep = '.', switch(
+        input$report_format_chr, PDF = 'pdf', HTML = 'html', Word = 'docx'
+      ))
+    },
+    content = function(file) {
+      withProgress(message = 'Rendering, please wait!', {
+        src <- pkgload:::shim_system.file("report.Rmd", package = "springtidesui")
+        temp_dir_chr <- tempdir()
+        owd <- setwd(temp_dir_chr)
+        on.exit(setwd(owd))
+        file.copy(src, 'report.Rmd', overwrite = TRUE)
+        if(is.null(input$meso2_type_chr)){
+          meso2_type_chr <- NA_character_
+        }else{
+          meso2_type_chr <- ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+                                                  lookup_variable = "long_name",
+                                                  lookup_reference = input$meso2_type_chr,
+                                                  target_variable = "short_name",
+                                                  evaluate = F)
+        }
+        if(is.null(input$meso2_chr)){
+          meso2_chr <- NA_character_
+        }else{
+          meso2_chr <- input$meso2_chr
+        }
+        if(is.null(input$micro_chr_vec)){
+          micro_chr_vec <- NA_character_
+        }else{
+          micro_chr_vec <- input$micro_chr_vec
+        }
+        params <- list(age_lower = input$age_range_int_vec[1],
+                       age_upper = input$age_range_int_vec[2],
+                       disorder_chr = input$disorder_chr %>%
+                         stringr::str_replace_all(" ","_"),
+                       gdist_dbl = ifelse(input$pa_type_chr=="Predefined boundary",
+                                          NA_real_,
+                                          ifelse(is.null(input$gdist_dbl), NA_real_,input$gdist_dbl)),
+                       gdist_ttime_chr = ifelse(input$pa_type_chr=="Predefined boundary",
+                                                NA_character_
+                                                ,ifelse(is.null(input$gdist_ttime_chr), NA_character_,input$gdist_ttime_chr)),
+                       meso2_bound_yr = ifelse(input$pa_type_chr=="Predefined boundary",
+                                               as.integer(input$meso2_bound_yr),
+                                               NA_real_),
+                       meso2_chr = meso2_chr,
+                       meso2_name_chr = springtides::make_area_name_chr(pa_r4 = pa_r4,
+                                                                        pa_type_chr = input$pa_type_chr,
+                                                                        area_type_chr = meso2_type_chr,
+                                                                        feature_chr = meso2_chr,
+                                                                        area_name_chr = input$area_name_chr),
+                       meso2_type_chr = meso2_type_chr,
+                       micro_chr_vec = micro_chr_vec,
+                       model_end_date = min(input$dateRange[2] %>% lubridate::as_datetime(tz="Australia/Melbourne"), pa_r4@temporal_max),
+                       model_start_date = max(input$dateRange[1] %>% lubridate::as_datetime(tz="Australia/Melbourne"), pa_r4@temporal_min),
+                       n_its_int = input$n_its_int,
+                       pa_type_chr = input$pa_type_chr,
+                       pdf_output_lgl = switch(input$report_format_chr,
+                                               PDF = T,
+                                               HTML = F,
+                                               Word = T),
+                       r_data_dir_chr = r_data_dir_chr,
+                       rendered_by_shiny_lgl = T,
+                       stat_chr = input$stat_chr,
+                       ttime_dbl = ifelse(input$pa_type_chr=="Predefined boundary",
+                                          NA_real_,
+                                          ifelse(is.null(input$ttime_dbl), NA_real_,input$ttime_dbl)),
+                       uncertainty_1_int = input$uncertainty_int[1],
+                       uncertainty_2_int = input$uncertainty_int[2],
+                       user_name_chr = input$user_name_chr)
+        params$title_chr <- paste0("Predicted ",
+                                   springtides::tf_stat_chr(stat_chr = params$stat_chr %>% tolower(),
+                                                            disorder_chr = params$disorder_chr),
+                                   " in young people aged ",
+                                   params$age_lower,
+                                   " to ",
+                                   params$age_upper,
+                                   " for ",
+                                   params$meso2_name_chr,
+                                   " between ",
+                                   params$model_start_date %>% format("%d %B %Y"),
+                                   " and ",
+                                   params$model_end_date %>% format("%d %B %Y"))
+        out <- rmarkdown::render('report.Rmd',
+                                 switch(input$report_format_chr,
+                                        PDF = rmarkdown::pdf_document(),
+                                        HTML = knitrBootstrap::bootstrap_document(title = params$title_chr,
+                                                                                  theme = "journal",
+                                                                                  menu = F),
+                                        Word = rmarkdown::word_document()),
+                                 params = params,
+                                 envir = new.env(parent = globalenv()))
+        file.rename(out, file)
+      })
+    }
+  )
+}
+#' @title secure_server
+#' @description FUNCTION_DESCRIPTION
+#' @param input PARAM_DESCRIPTION
+#' @param output PARAM_DESCRIPTION
+#' @param session PARAM_DESCRIPTION
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @seealso
+#'  \code{\link[shinymanager]{secure-app}},\code{\link[shinymanager]{check_credentials}}
+#'  \code{\link[shiny]{renderPrint}},\code{\link[shiny]{reactiveValuesToList}}
+#' @rdname secure_server
+#' @export
+#' @importFrom shinymanager secure_server check_credentials
+#' @importFrom shiny renderPrint reactiveValuesToList
+secure_server <- function(input,
+                          output,
+                          session){
+  result_auth <- shinymanager::secure_server(check_credentials = shinymanager::check_credentials(credentials_tb))
+  server_chr_vec <- deparse(server)
+  eval(parse(text = server_chr_vec[3:(length(server_chr_vec)-1)]))
+  output$res_auth <- shiny::renderPrint({
+    shiny::reactiveValuesToList(result_auth)
+  })
+}
+#' @title source_fn_contents
+#' @description FUNCTION_DESCRIPTION
+#' @param fn PARAM_DESCRIPTION
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @rdname source_fn_contents
+#' @export
+
+source_fn_contents <- function(fn){
+  fn_chr_vec <- deparse(fn)
+  eval(parse(text = fn_chr_vec[3:(length(fn_chr_vec)-1)]))
+}
+
+#' @title filter_if_var_exists
+#' @description FUNCTION_DESCRIPTION
+#' @param tb PARAM_DESCRIPTION
+#' @param var_chr PARAM_DESCRIPTION
+#' @param var_val_xxx PARAM_DESCRIPTION
+#' @param cond_chr PARAM_DESCRIPTION
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @seealso
+#'  \code{\link[dplyr]{filter}}
+#' @rdname filter_if_var_exists
+#' @export
+#' @importFrom dplyr filter
+filter_if_var_exists <- function(tb,
+                                 var_chr,
+                                 var_val_xxx,
+                                 cond_chr){
+  if(var_chr %in% names(tb)){
+    tb %>%
+      dplyr::filter(eval(parse(text = paste0(var_chr,cond_chr,"'",var_val_xxx,"'"))))
+  }else{
+    tb
+  }
+}
+#' @title subset_vec_if_var_exists
+#' @description FUNCTION_DESCRIPTION
+#' @param chr_vec PARAM_DESCRIPTION
+#' @param var_val_chr PARAM_DESCRIPTION
+#' @param fn PARAM_DESCRIPTION
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @seealso
+#'  \code{\link[rlang]{exec}}
+#' @rdname subset_vec_if_var_exists
+#' @export
+#' @importFrom rlang exec
+subset_vec_if_var_exists <-  function(chr_vec,
+                                      var_val_chr,
+                                      fn){
+  if(!is.null(var_val_chr)){
+    chr_vec[rlang::exec(fn,chr_vec,var_val_chr)]
+  }else{
+    chr_vec
+  }
+}

@@ -1,0 +1,16 @@
+Package: springtidesui
+Title: Functions and Shiny app to create a user interface for the Springtides youth mental health epidemiology model.
+Version: 0.0.0.9000
+Authors@R: c(
+    person(given = "Matthew",family = "Hamilton",email = "matthew.hamilton@orygen.org.au", role = c("aut", "cre"),comment = c(ORCID = "0000-0001-7407-9194")), 
+    person(given = "Ruby",family = "Callanan",email = "ruby.callanan@orygen.org.au", role = c("rev")), 
+    person(given = "Alexandra",family = "MacDonald",email = "alexandra.macdonald@orygen.org.au", role = c("rev")), 
+    person(given = "Sophie",family = "Prober",email = "sophie.prober@orygen.org.au", role = c("rev"),
+    comment = c(ORCID = "0000-0001-5360-5888")), 
+    person("Orygen", role = c("cph", "fnd")))
+Description: Functions to simulate the evolving epidemiology of a range of mental disorders affecting young people in Australia.
+Depends: R (>= 3.5.1)
+License: GPL-3 | file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.0.2
