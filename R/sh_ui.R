@@ -139,11 +139,7 @@ make_app_ui <- function(){
                                                         value = "stat_type",
                                                         shiny::p(""),
                                                         shiny::actionButton("returnToWhen", "<<-- Go back and change 'When' settings"),
-                                                        shiny::selectInput("stat_chr", h3("Statistic:"),
-                                                                           choices = get_input_ls(fn = make_stat_choices_ls,
-                                                                                                               args = NULL,
-                                                                                                               n = Inf) %>% purrr::flatten_chr() %>% sort()),
-
+                                                        shiny::uiOutput("statisticControls"),
                                                         shiny::sliderInput("n_its_int", "Number of simulation iterations", 1, 100, 10),
                                                         shiny::sliderInput("uncertainty_int", "Uncertainty Interval",
                                                                            min = 0.01, max = 1, value = c(0.025,0.975), step = 0.005),

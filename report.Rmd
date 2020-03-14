@@ -7,64 +7,80 @@ output:
     fig_caption: yes
   html_document:
     df_print: paged
-header-includes: 
-  - \usepackage{booktabs} 
-  - \usepackage{longtable} 
-  - \usepackage{array} 
-  - \usepackage{multirow} 
-  - \usepackage{wrapfig} 
-  - \usepackage{float}
-  - \usepackage{colortbl} 
-  - \usepackage{pdflscape} 
-  - \usepackage{tabu} 
-  - \usepackage{threeparttable} 
-  - \usepackage{threeparttablex}
-  - \usepackage[normalem]{ulem} 
-  - \usepackage{makecell} 
-  - \usepackage{xcolor}
 ---
 
 ```{r echo=F, warning=F, include=F}
 library(magrittr)
 library(kableExtra)
+# library(pander)
+#library(springtides)
+# pander::panderOptions("table.split.table", Inf)
 options(scipen=999)
 
 ```
 
 ```{r}
 project_data_path_chr <-"C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format" %>% stringr::str_replace("R_Format","Project")
-# params_1 <- readRDS(paste0(project_data_path_chr,"/params_4.rds"))
-# params_2 <- readRDS(paste0(project_data_path_chr,"/params_5.rds"))
-# input_ls_1 <- readRDS(paste0(project_data_path_chr,"/input_ls_4.rds"))
-# input_ls_2 <- readRDS(paste0(project_data_path_chr,"/input_ls_5.rds"))
+params_1 <- readRDS(paste0(project_data_path_chr,"/params_4.rds"))
+params_2 <- readRDS(paste0(project_data_path_chr,"/params_5.rds"))
+input_ls_1 <- readRDS(paste0(project_data_path_chr,"/input_ls_4.rds"))
+input_ls_2 <- readRDS(paste0(project_data_path_chr,"/input_ls_5.rds"))
+```
+
+```{r}
 # setdiff(params_1,params_2)
 # setdiff(params_2,params_1)
 # setdiff(input_ls_1,input_ls_2)
 # setdiff(input_ls_2,input_ls_1)
-# params <- params_2
-# input_ls <- input_ls_2
-# params$rendered_by_shiny_lgl <-F
-# if(params$rendered_by_shiny_lgl)
-#   shiny::setProgress(0.2, message = "Step two: Processing geometries (this is usually the longest step)")
-# sim_data_r4 <- ready4sim::make_sim_data_env(input_ls = input_ls)
-# if(params$rendered_by_shiny_lgl)
-#   shiny::setProgress(0.55, message = "Step three: Running simulations")
-# sim_results_ls <- ready4sim::runSimulation(x = sim_data_r4,
-#                                            n_its_int = input_ls$n_its_int,
-#                                            group_by = input_ls$grouping_for_sim)
-# if(params$rendered_by_shiny_lgl)
-#   shiny::setProgress(0.75, message = "Step four: Rendering report")
-# saveRDS(input_ls,paste0(project_data_path_chr,"/input_ls_3.rds"))
-# saveRDS(sim_data_r4,paste0(project_data_path_chr,"/sim_data_r4_3.rds"))
-#saveRDS(sim_results_ls,paste0(project_data_path_chr,"/sim_results_ls_3.rds"))
+```
+```{r}
+params <- params_2
+input_ls <- input_ls_2
+params$rendered_by_shiny_lgl <-F
+```
+
+
+```{r, include=F}
+if(params$rendered_by_shiny_lgl)
+  shiny::setProgress(0.2, message = "Step two: Processing geometries (this is usually the longest step)")
+sim_data_r4 <- ready4sim::make_sim_data_env(input_ls = input_ls)
 
 ```
 
+```{r}
+# project_data_path_chr <- params$r_data_dir_chr %>% stringr::str_replace("R_Format","Project")
+# saveRDS(input_ls,paste0(project_data_path_chr,"/input_ls_3.rds"))
+# saveRDS(sim_data_r4,paste0(project_data_path_chr,"/sim_data_r4_3.rds"))
+
+```
+
+
 ```{r, include=F}
-input_ls <- readRDS(paste0(project_data_path_chr,"/input_ls_3.rds"))
-sim_data_r4 <- readRDS(paste0(project_data_path_chr,"/sim_data_r4_3.rds"))
-sim_results_ls <- readRDS(paste0(project_data_path_chr,"/sim_results_ls_3.rds"))
-params <- readRDS(paste0(project_data_path_chr,"/params_4.rds"))
+if(params$rendered_by_shiny_lgl)
+  shiny::setProgress(0.55, message = "Step three: Running simulations")
+sim_results_ls <- ready4sim::runSimulation(x = sim_data_r4,
+                                           n_its_int = input_ls$n_its_int,
+                                           group_by = input_ls$grouping_for_sim)
+if(params$rendered_by_shiny_lgl)
+  shiny::setProgress(0.75, message = "Step four: Rendering report")
+# input_ls <- params$input_ls_chr %>% readRDS()
+# sim_data_r4 <- params$sim_data_r4_chr %>% readRDS()
+# sim_results_ls <- params$sim_results_ls_chr %>% readRDS()
+#options(knitr.table.format = "latex")
+```
+
+```{r}
+#saveRDS(sim_results_ls,paste0(project_data_path_chr,"/sim_results_ls_3.rds"))
+```
+
+
+
+```{r, include=F}
+# project_data_path_chr <-params$r_data_dir_chr %>% stringr::str_replace("R_Format","Project")
+# input_ls <- readRDS(paste0(project_data_path_chr,"/input_ls_3.rds"))
+# sim_data_r4 <- readRDS(paste0(project_data_path_chr,"/sim_data_r4_3.rds"))
+# sim_results_ls <- readRDS(paste0(project_data_path_chr,"/sim_results_ls_3.rds"))
+#input_ls$pa_r4@lookup_tb@sp_abbreviations_lup <- springtides::aus_pa_r4@lookup_tb@sp_abbreviations_lup
 ```
 
 ```{r, include=F}

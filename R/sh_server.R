@@ -12,27 +12,27 @@
 #'  }
 #' }
 #' @seealso
-#'  \code{\link[springtides]{c("get_input_vec", "get_input_vec")}},\code{\link[springtides]{c("get_disorder_choices_chr_vec", "get_disorder_choices_chr_vec")}},\code{\link[springtides]{c("get_age_range_choices_int_vec", "get_age_range_choices_int_vec")}},\code{\link[springtides]{c("make_area_name_chr", "make_area_name_chr")}},\code{\link[springtides]{c("tf_stat_chr", "tf_stat_chr")}}
 #'  \code{\link[shiny]{reactiveValues}},\code{\link[shiny]{updateTabsetPanel}},\code{\link[shiny]{observeEvent}},\code{\link[shiny]{observe}},\code{\link[shiny]{reactive}},\code{\link[shiny]{renderUI}},\code{\link[shiny]{tag}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{checkboxGroupInput}},\code{\link[shiny]{actionButton}},\code{\link[shiny]{dateRangeInput}},\code{\link[shiny]{validate}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{HTML}},\code{\link[shiny]{downloadHandler}}
 #'  \code{\link[shinyjs]{visibilityFuncs}}
 #'  \code{\link[dplyr]{filter}},\code{\link[dplyr]{pull}}
-#'  \code{\link[purrr]{reduce}},\code{\link[purrr]{map}}
+#'  \code{\link[purrr]{reduce}},\code{\link[purrr]{map}},\code{\link[purrr]{flatten}}
 #'  \code{\link[rlang]{sym}}
 #'  \code{\link[ready4utils]{data_get}}
 #'  \code{\link[stringr]{str_sub}},\code{\link[stringr]{str_replace}}
+#'  \code{\link[springtides]{get_input_vec}},\code{\link[springtides]{get_disorder_choices_chr_vec}},\code{\link[springtides]{get_age_range_choices_int_vec}},\code{\link[springtides]{get_input_ls}},\code{\link[springtides]{make_stat_choices_ls}},\code{\link[springtides]{make_area_name_chr}},\code{\link[springtides]{tf_stat_chr}}
 #'  \code{\link[lubridate]{is.Date}},\code{\link[lubridate]{as_date}}
 #'  \code{\link[rmarkdown]{render}},\code{\link[rmarkdown]{pdf_document}},\code{\link[rmarkdown]{word_document}}
 #'  \code{\link[knitrBootstrap]{bootstrap_document}}
 #' @rdname server
 #' @export
-#' @importFrom springtides get_input_vec get_disorder_choices_chr_vec get_age_range_choices_int_vec make_area_name_chr tf_stat_chr
 #' @importFrom shiny reactiveValues updateTabsetPanel observeEvent observe reactive renderUI tagList selectInput h3 checkboxGroupInput actionButton dateRangeInput validate need sliderInput h1 p HTML downloadHandler
 #' @importFrom shinyjs hide show
 #' @importFrom dplyr filter pull
-#' @importFrom purrr reduce map_chr
+#' @importFrom purrr reduce map_chr flatten_chr
 #' @importFrom rlang sym
 #' @importFrom ready4utils data_get
 #' @importFrom stringr str_sub str_replace_all
+#' @importFrom springtides get_input_vec get_disorder_choices_chr_vec get_age_range_choices_int_vec get_input_ls make_stat_choices_ls make_area_name_chr tf_stat_chr
 #' @importFrom lubridate is.Date as_datetime
 #' @importFrom rmarkdown render pdf_document word_document
 #' @importFrom knitrBootstrap bootstrap_document
@@ -369,6 +369,14 @@ server <- function(input,
       shiny::sliderInput("age_range_int_vec",
                          shiny::h3("Age range"),
                          min = min(age_vec), max = max(age_vec), value = age_vec))
+  })
+  output$statisticControls <- shiny::renderUI({
+    shiny::tagList(
+      shiny::selectInput("stat_chr", h3("Statistic:"),
+                         choices = springtides::get_input_ls(fn = springtides::make_stat_choices_ls,
+                                                             args = NULL,
+                                                             n = Inf) %>% purrr::flatten_chr() %>% sort())
+      )
   })
   output$about_chr <- shiny::renderUI({
     if(getTabIndex()==1){
