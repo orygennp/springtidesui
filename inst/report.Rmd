@@ -61,7 +61,7 @@ options(scipen=999)
 ```
 
 
-```{r echo=F, warning=F, include=F}
+```{r echo=F, warning=F}
 if(params$rendered_by_shiny_lgl)
   shiny::setProgress(0.1, message = "Step one: Processing user inputs")
 if(is.na(params$meso2_type_chr)){
@@ -78,7 +78,7 @@ if(is.na(params$meso2_bound_yr)){
 ```
 
 
-```{r echo=F, warning=F, include=F}
+```{r echo=F, warning=F}
 input_ls <- springtides::make_one_input_ls(pa_r4 = springtides::aus_pa_r4,
                                path_to_data_chr = params$r_data_dir_chr,
                                args_ls = list(age_range_int_vec = c(params$age_lower,params$age_upper),
@@ -105,7 +105,7 @@ input_ls <- springtides::make_one_input_ls(pa_r4 = springtides::aus_pa_r4,
                                             uncertainty_int = c(params$uncertainty_1_int, params$uncertainty_2_int)))
 ```
 
-```{r, include=F}
+```{r, echo=F, warning=F}
 if(params$rendered_by_shiny_lgl)
   shiny::setProgress(0.2, message = "Step two: Processing geometries (this is usually the longest step)")
 sim_data_r4 <- ready4sim::make_sim_data_env(input_ls = input_ls)
@@ -113,7 +113,7 @@ sim_data_r4 <- ready4sim::make_sim_data_env(input_ls = input_ls)
 ```
 
 
-```{r, include=F}
+```{r, echo=F, warning=F}
 if(params$rendered_by_shiny_lgl)
   shiny::setProgress(0.55, message = "Step three: Running simulations")
 sim_results_ls <- ready4sim::runSimulation(x = sim_data_r4,
@@ -133,7 +133,7 @@ if(params$rendered_by_shiny_lgl)
 ```
 
 
-```{r, include=F}
+```{r, echo=F, warning=F}
 disorder_chr <- params$disorder_chr
 end_year_dbl <- sim_data_r4@model_end_date %>% lubridate::year()
 n_its_int <- input_ls$n_its_int
@@ -145,7 +145,7 @@ tfd_start_date_chr <- sim_data_r4@model_start_date %>% format("%d %B %Y")
 ```
 
 
-```{r, include=F}
+```{r, echo=F, warning=F}
 pdf_output_lgl <- params$pdf_output_lgl
 if(pdf_output_lgl)
   options(knitr.table.format = "latex")
@@ -205,7 +205,7 @@ To make the predictions in this report the Springtides app first `r ifelse(param
 ## Data sources
 Currently, all input data used by the Springtides model are Australia specific. Most of the input data is freely available on the Internet and released under permissive licensing arrangements. Links to all such open data is included in the tables that summarise model inputs. Some input data were collated by the Springtides development team and collectively form part of the Springtides Replication Dataset. The replication dataset is currently stored in a private online data repository but is due for public release later in 2020.
 
-```{r, include=F}
+```{r, echo=F, warning=F}
 pnt_coord_1_chr <- ifelse(params$meso2_type_chr=="HSS",
                              " and point coordinates of service centre locations (Table 2)",
                              "")
@@ -217,7 +217,7 @@ pnt_coord_2_chr <- ifelse(params$meso2_type_chr=="HSS"," The point coordinate da
 The geometry data include data on the boundaries of a range of Australian spatial units (Table 1)`r pnt_coord_1_chr`. The boundary data source files are available for download direct from their publisher in the form of ESRI shape files.`r pnt_coord_2_chr` 
 
 
-```{r, include=F}
+```{r, echo=F, warning=F}
 table_cnt_dbl <-0
 ```
 
@@ -258,7 +258,7 @@ input_tables_ls$epi_inputs_kb
 
 # Results
 
-```{r, include=F}
+```{r, echo=F, warning=F}
 year_0_stat <- ifelse(y0_prediction_lgl ,"predictions","estimates")
 ```
 
@@ -504,7 +504,7 @@ First and most importantly, this report is produced by a development version of 
 # Contact
 You can help improve the Springtides App by reporting any suspected errors or providing usability feedback to the Springtides development team. Email: matthew.hamilton@orygen.org.au
 
-```{r, include=F}
+```{r, echo=F, warning=F}
 if(params$rendered_by_shiny_lgl)
   shiny::setProgress(1, message = "Step five: Wrap up") 
 ```
