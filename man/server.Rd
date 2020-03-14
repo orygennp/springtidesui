@@ -30,14 +30,14 @@ if(interactive()){
 }
 }
 \seealso{
-\code{\link[springtides]{c("get_input_vec", "get_input_vec")}},\code{\link[springtides]{c("get_disorder_choices_chr_vec", "get_disorder_choices_chr_vec")}},\code{\link[springtides]{c("get_age_range_choices_int_vec", "get_age_range_choices_int_vec")}},\code{\link[springtides]{c("make_area_name_chr", "make_area_name_chr")}},\code{\link[springtides]{c("tf_stat_chr", "tf_stat_chr")}}
- \code{\link[shiny]{reactiveValues}},\code{\link[shiny]{updateTabsetPanel}},\code{\link[shiny]{observeEvent}},\code{\link[shiny]{observe}},\code{\link[shiny]{reactive}},\code{\link[shiny]{renderUI}},\code{\link[shiny]{tag}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{checkboxGroupInput}},\code{\link[shiny]{actionButton}},\code{\link[shiny]{dateRangeInput}},\code{\link[shiny]{validate}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{HTML}},\code{\link[shiny]{downloadHandler}}
+\code{\link[shiny]{reactiveValues}},\code{\link[shiny]{updateTabsetPanel}},\code{\link[shiny]{observeEvent}},\code{\link[shiny]{observe}},\code{\link[shiny]{reactive}},\code{\link[shiny]{renderUI}},\code{\link[shiny]{tag}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{checkboxGroupInput}},\code{\link[shiny]{actionButton}},\code{\link[shiny]{dateRangeInput}},\code{\link[shiny]{validate}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{HTML}},\code{\link[shiny]{downloadHandler}}
  \code{\link[shinyjs]{visibilityFuncs}}
  \code{\link[dplyr]{filter}},\code{\link[dplyr]{pull}}
- \code{\link[purrr]{reduce}},\code{\link[purrr]{map}}
+ \code{\link[purrr]{reduce}},\code{\link[purrr]{map}},\code{\link[purrr]{flatten}}
  \code{\link[rlang]{sym}}
  \code{\link[ready4utils]{data_get}}
  \code{\link[stringr]{str_sub}},\code{\link[stringr]{str_replace}}
+ \code{\link[springtides]{get_input_vec}},\code{\link[springtides]{get_disorder_choices_chr_vec}},\code{\link[springtides]{get_age_range_choices_int_vec}},\code{\link[springtides]{get_input_ls}},\code{\link[springtides]{make_stat_choices_ls}},\code{\link[springtides]{make_area_name_chr}},\code{\link[springtides]{tf_stat_chr}}
  \code{\link[lubridate]{is.Date}},\code{\link[lubridate]{as_date}}
  \code{\link[rmarkdown]{render}},\code{\link[rmarkdown]{pdf_document}},\code{\link[rmarkdown]{word_document}}
  \code{\link[knitrBootstrap]{bootstrap_document}}
