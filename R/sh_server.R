@@ -562,7 +562,7 @@ server <- function(input,
         }else{
           micro_chr_vec <- input$micro_chr_vec
         }
-        params <- list(age_lower = input$age_range_int_vec[1],
+        params_ls <- list(age_lower = input$age_range_int_vec[1],
                        age_upper = input$age_range_int_vec[2],
                        disorder_chr = input$disorder_chr %>%
                          stringr::str_replace_all(" ","_"),
@@ -600,19 +600,19 @@ server <- function(input,
                        uncertainty_1_int = input$uncertainty_int[1],
                        uncertainty_2_int = input$uncertainty_int[2],
                        user_name_chr = input$user_name_chr)
-        params$title_chr <- paste0("Predicted ",
-                                   springtides::tf_stat_chr(stat_chr = params$stat_chr %>% tolower(),
-                                                            disorder_chr = params$disorder_chr),
+        params_ls$title_chr <- paste0("Predicted ",
+                                   springtides::tf_stat_chr(stat_chr = params_ls$stat_chr %>% tolower(),
+                                                            disorder_chr = params_ls$disorder_chr),
                                    " in young people aged ",
-                                   params$age_lower,
+                                   params_ls$age_lower,
                                    " to ",
-                                   params$age_upper,
+                                   params_ls$age_upper,
                                    " for ",
-                                   params$meso2_name_chr,
+                                   params_ls$meso2_name_chr,
                                    " between ",
-                                   params$model_start_date %>% format("%d %B %Y"),
+                                   params_ls$model_start_date %>% format("%d %B %Y"),
                                    " and ",
-                                   params$model_end_date %>% format("%d %B %Y"))
+                                   params_ls$model_end_date %>% format("%d %B %Y"))
         out <- rmarkdown::render('report.Rmd',
                                  switch(input$report_format_chr,
                                         PDF = rmarkdown::pdf_document(),
@@ -620,8 +620,9 @@ server <- function(input,
                                                                                   theme = "journal",
                                                                                   menu = F),
                                         Word = rmarkdown::word_document()),
-                                 params = params,
-                                 envir = new.env(parent = globalenv()))
+                                 params = params_ls#,
+                                 #envir = new.env(parent = globalenv())
+                                 )
         file.rename(out, file)
       })
     }
