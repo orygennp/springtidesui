@@ -538,9 +538,9 @@ server <- function(input,
     },
     content = function(file) {
       withProgress(message = 'Rendering, please wait!', {
-        src <- system.file("report.Rmd", package = "springtidesui")
+        path_to_template_chr <- "report.Rmd" #system.file("report.Rmd", package = "springtidesui")
         temp_dir_chr <- tempdir()
-        file.copy(src, paste0(temp_dir_chr,'/report.Rmd'), overwrite = TRUE)
+        file.copy(path_to_template_chr, paste0(temp_dir_chr,'/report.Rmd'), overwrite = TRUE)
         if(is.null(input$meso2_type_chr)){
           meso2_type_chr <- NA_character_
         }else{
