@@ -540,9 +540,7 @@ server <- function(input,
       withProgress(message = 'Rendering, please wait!', {
         src <- system.file("report.Rmd", package = "springtidesui")
         temp_dir_chr <- tempdir()
-        owd <- setwd(temp_dir_chr)
-        on.exit(setwd(owd))
-        file.copy(src, 'report.Rmd', overwrite = TRUE)
+        file.copy(src, paste0(temp_dir_chr,'/report.Rmd'), overwrite = TRUE)
         if(is.null(input$meso2_type_chr)){
           meso2_type_chr <- NA_character_
         }else{
@@ -620,8 +618,9 @@ server <- function(input,
                                                                                   theme = "journal",
                                                                                   menu = F),
                                         Word = rmarkdown::word_document()),
-                                 params = params_ls#,
-                                 #envir = new.env(parent = globalenv())
+                                 params = params_ls,
+                                 envir = new.env(#parent = globalenv()
+                                                 )
                                  )
         file.rename(out, file)
       })
