@@ -611,7 +611,7 @@ server <- function(input,
                                    params_ls$model_start_date %>% format("%d %B %Y"),
                                    " and ",
                                    params_ls$model_end_date %>% format("%d %B %Y"))
-        out <- rmarkdown::render('report.Rmd',
+        out <- rmarkdown::render(paste0(temp_dir_chr,'/report.Rmd'),
                                  switch(input$report_format_chr,
                                         PDF = rmarkdown::pdf_document(),
                                         HTML = knitrBootstrap::bootstrap_document(title = params$title_chr,
