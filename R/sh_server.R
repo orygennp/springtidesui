@@ -15,11 +15,11 @@
 #'  \code{\link[shiny]{reactiveValues}},\code{\link[shiny]{updateTabsetPanel}},\code{\link[shiny]{observeEvent}},\code{\link[shiny]{observe}},\code{\link[shiny]{reactive}},\code{\link[shiny]{renderUI}},\code{\link[shiny]{tag}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{checkboxGroupInput}},\code{\link[shiny]{actionButton}},\code{\link[shiny]{dateRangeInput}},\code{\link[shiny]{validate}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{HTML}},\code{\link[shiny]{downloadHandler}}
 #'  \code{\link[shinyjs]{visibilityFuncs}}
 #'  \code{\link[dplyr]{filter}},\code{\link[dplyr]{pull}}
+#'  \code{\link[springtides]{filter_if_var_exists}},\code{\link[springtides]{get_input_vec}},\code{\link[springtides]{get_disorder_choices_chr_vec}},\code{\link[springtides]{subset_vec_if_var_exists}},\code{\link[springtides]{get_age_range_choices_int_vec}},\code{\link[springtides]{get_input_ls}},\code{\link[springtides]{make_stat_choices_ls}},\code{\link[springtides]{make_area_name_chr}},\code{\link[springtides]{tf_stat_chr}}
 #'  \code{\link[purrr]{reduce}},\code{\link[purrr]{map}},\code{\link[purrr]{flatten}}
 #'  \code{\link[rlang]{sym}}
 #'  \code{\link[ready4utils]{data_get}}
 #'  \code{\link[stringr]{str_sub}},\code{\link[stringr]{str_replace}}
-#'  \code{\link[springtides]{get_input_vec}},\code{\link[springtides]{get_disorder_choices_chr_vec}},\code{\link[springtides]{get_age_range_choices_int_vec}},\code{\link[springtides]{get_input_ls}},\code{\link[springtides]{make_stat_choices_ls}},\code{\link[springtides]{make_area_name_chr}},\code{\link[springtides]{tf_stat_chr}}
 #'  \code{\link[lubridate]{is.Date}},\code{\link[lubridate]{as_date}}
 #'  \code{\link[rmarkdown]{render}},\code{\link[rmarkdown]{pdf_document}},\code{\link[rmarkdown]{word_document}}
 #'  \code{\link[knitrBootstrap]{bootstrap_document}}
@@ -28,11 +28,11 @@
 #' @importFrom shiny reactiveValues updateTabsetPanel observeEvent observe reactive renderUI tagList selectInput h3 checkboxGroupInput actionButton dateRangeInput validate need sliderInput h1 p HTML downloadHandler
 #' @importFrom shinyjs hide show
 #' @importFrom dplyr filter pull
+#' @importFrom springtides filter_if_var_exists get_input_vec get_disorder_choices_chr_vec subset_vec_if_var_exists get_age_range_choices_int_vec get_input_ls make_stat_choices_ls make_area_name_chr tf_stat_chr
 #' @importFrom purrr reduce map_chr flatten_chr
 #' @importFrom rlang sym
 #' @importFrom ready4utils data_get
 #' @importFrom stringr str_sub str_replace_all
-#' @importFrom springtides get_input_vec get_disorder_choices_chr_vec get_age_range_choices_int_vec get_input_ls make_stat_choices_ls make_area_name_chr tf_stat_chr
 #' @importFrom lubridate is.Date as_datetime
 #' @importFrom rmarkdown render pdf_document word_document
 #' @importFrom knitrBootstrap bootstrap_document
@@ -63,17 +63,17 @@ server <- function(input,
                                .,".rds"
                         )
     ) %>%
-      filter_if_var_exists(var_chr = "STE_NAME16",
+      springtides::filter_if_var_exists(var_chr = "STE_NAME16",
                            var_val_xxx = "Other Territories",
                            cond_chr = "!=") %>%
       purrr::reduce(c("2899","6798","6799","7151"),
                     .init = .,
-                    ~ .x %>% filter_if_var_exists(var_chr = "POA_NAME",
+                    ~ .x %>% springtides::filter_if_var_exists(var_chr = "POA_NAME",
                                                   var_val_xxx = .y,
                                                   cond_chr = "!=")) %>%
       purrr::reduce(c("2899","6798","6799","7151"),
                     .init = .,
-                    ~ .x %>% filter_if_var_exists(var_chr = "POA_NAME16",
+                    ~ .x %>% springtides::filter_if_var_exists(var_chr = "POA_NAME16",
                                                   var_val_xxx = .y,
                                                   cond_chr = "!="))
 
@@ -298,7 +298,7 @@ server <- function(input,
     shiny::tagList(
       shiny::selectInput("meso2_chr", h3("Feature"),
                          choices = reactive_ls$meso2_chr_choices_vec %>%
-                           subset_vec_if_var_exists(var_val_chr = input$meso2_first_chr,
+                           springtides::subset_vec_if_var_exists(var_val_chr = input$meso2_first_chr,
                                                     fn = startsWith)
       )
 
