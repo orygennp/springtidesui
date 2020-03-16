@@ -56,6 +56,19 @@ library(magrittr)
 library(kableExtra)
 options(scipen=999)
 ###
+if(params$rendered_by_shiny_lgl)
+  shiny::setProgress(0.1, message = "Step one: Processing user inputs")
+if(is.na(params$meso2_type_chr)){
+  meso2_type_chr <- NULL
+}else{
+  meso2_type_chr <- params$meso2_type_chr
+}
+if(is.na(params$meso2_bound_yr)){
+  meso2_bound_yr <- NULL
+}else{
+  meso2_bound_yr <- params$meso2_bound_yr
+}
+disorder_chr <- params$disorder_chr
 input_ls <- springtides::make_one_input_ls(pa_r4 = springtides::aus_pa_r4,
                                path_to_data_chr = params$r_data_dir_chr,
                                args_ls = list(age_range_int_vec = c(params$age_lower,params$age_upper),
@@ -98,19 +111,6 @@ if(params$rendered_by_shiny_lgl)
 ```
 
 ```{r echo=F, warning=F, message=F, eval=T}
-if(params$rendered_by_shiny_lgl)
-  shiny::setProgress(0.1, message = "Step one: Processing user inputs")
-if(is.na(params$meso2_type_chr)){
-  meso2_type_chr <- NULL
-}else{
-  meso2_type_chr <- params$meso2_type_chr
-}
-if(is.na(params$meso2_bound_yr)){
-  meso2_bound_yr <- NULL
-}else{
-  meso2_bound_yr <- params$meso2_bound_yr
-}
-disorder_chr <- params$disorder_chr
 end_year_dbl <- sim_data_r4@model_end_date %>% lubridate::year()
 n_its_int <- input_ls$n_its_int
 start_year_dbl <- sim_data_r4@model_start_date %>% lubridate::year()
