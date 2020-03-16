@@ -51,7 +51,7 @@ header-includes:
 ---
 
 
-```{r echo=F, warning=F, message=F,eval=T}
+```{r echo=F, warning=F, message=F, eval=T}
 library(magrittr)
 library(kableExtra)
 options(scipen=999)
@@ -108,9 +108,7 @@ if(params$rendered_by_shiny_lgl)
 # input_ls <- readRDS(paste0(project_data_path_chr,"/input_ls_4.rds"))
 # sim_data_r4 <- readRDS(paste0(project_data_path_chr,"/sim_data_r4_4.rds"))
 # sim_results_ls <- readRDS(paste0(project_data_path_chr,"/sim_results_ls_4.rds"))
-```
-
-```{r echo=F, warning=F, message=F, eval=T}
+###
 end_year_dbl <- sim_data_r4@model_end_date %>% lubridate::year()
 n_its_int <- input_ls$n_its_int
 start_year_dbl <- sim_data_r4@model_start_date %>% lubridate::year()
@@ -157,11 +155,6 @@ output_plots_ls <- springtides::make_output_plots_ls(sim_results_ls = sim_result
                                 input_ls = input_ls,
                                 land_area_type_chr = "STE")
 ```
-
-
-
-
-
 
 Not for citation or public dissemination. 
 
