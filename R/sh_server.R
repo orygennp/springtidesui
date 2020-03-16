@@ -538,7 +538,7 @@ server <- function(input,
     },
     content = function(file) {
       withProgress(message = 'Rendering, please wait!', {
-        path_to_template_chr <- "report.Rmd" #system.file("report.Rmd", package = "springtidesui")
+        path_to_template_chr <- system.file("report.Rmd", package = "springtidesui")#"report.Rmd"
         temp_dir_chr <- tempdir()
         file.copy(path_to_template_chr, paste0(temp_dir_chr,'/report.Rmd'), overwrite = TRUE)
         if(is.null(input$meso2_type_chr)){
@@ -657,79 +657,4 @@ secure_server <- function(input,
     shiny::reactiveValuesToList(result_auth)
   })
 }
-#' @title source_fn_contents
-#' @description FUNCTION_DESCRIPTION
-#' @param fn PARAM_DESCRIPTION
-#' @return OUTPUT_DESCRIPTION
-#' @details DETAILS
-#' @examples
-#' \dontrun{
-#' if(interactive()){
-#'  #EXAMPLE1
-#'  }
-#' }
-#' @rdname source_fn_contents
-#' @export
 
-source_fn_contents <- function(fn){
-  fn_chr_vec <- deparse(fn)
-  eval(parse(text = fn_chr_vec[3:(length(fn_chr_vec)-1)]))
-}
-
-#' @title filter_if_var_exists
-#' @description FUNCTION_DESCRIPTION
-#' @param tb PARAM_DESCRIPTION
-#' @param var_chr PARAM_DESCRIPTION
-#' @param var_val_xxx PARAM_DESCRIPTION
-#' @param cond_chr PARAM_DESCRIPTION
-#' @return OUTPUT_DESCRIPTION
-#' @details DETAILS
-#' @examples
-#' \dontrun{
-#' if(interactive()){
-#'  #EXAMPLE1
-#'  }
-#' }
-#' @seealso
-#'  \code{\link[dplyr]{filter}}
-#' @rdname filter_if_var_exists
-#' @export
-#' @importFrom dplyr filter
-filter_if_var_exists <- function(tb,
-                                 var_chr,
-                                 var_val_xxx,
-                                 cond_chr){
-  if(var_chr %in% names(tb)){
-    tb %>%
-      dplyr::filter(eval(parse(text = paste0(var_chr,cond_chr,"'",var_val_xxx,"'"))))
-  }else{
-    tb
-  }
-}
-#' @title subset_vec_if_var_exists
-#' @description FUNCTION_DESCRIPTION
-#' @param chr_vec PARAM_DESCRIPTION
-#' @param var_val_chr PARAM_DESCRIPTION
-#' @param fn PARAM_DESCRIPTION
-#' @return OUTPUT_DESCRIPTION
-#' @details DETAILS
-#' @examples
-#' \dontrun{
-#' if(interactive()){
-#'  #EXAMPLE1
-#'  }
-#' }
-#' @seealso
-#'  \code{\link[rlang]{exec}}
-#' @rdname subset_vec_if_var_exists
-#' @export
-#' @importFrom rlang exec
-subset_vec_if_var_exists <-  function(chr_vec,
-                                      var_val_chr,
-                                      fn){
-  if(!is.null(var_val_chr)){
-    chr_vec[rlang::exec(fn,chr_vec,var_val_chr)]
-  }else{
-    chr_vec
-  }
-}
