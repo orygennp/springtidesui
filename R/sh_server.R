@@ -618,9 +618,8 @@ server <- function(input,
                                                                                   theme = "journal",
                                                                                   menu = F),
                                         Word = rmarkdown::word_document()),
-                                 params = params_ls#,
-                                 # envir = new.env(#parent = globalenv()
-                                 #                 )
+                                 params = params_ls,
+                                 envir = new.env(parent = globalenv())
                                  )
         file.rename(out, file)
       })
