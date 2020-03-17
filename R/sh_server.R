@@ -39,9 +39,13 @@
 server <- function(input,
                    output,
                    session) {
+  ## 1. LOAD CONTEXT DATA
   data("aus_pa_r4", package = "springtides")
   pa_r4 <- aus_pa_r4
+  ## 2. CREATE REACTIVE LIST
   reactive_ls <- shiny::reactiveValues()
+  ## 3. SET UP TAB PANEL NAVIGATION
+  ## 3.1 NAVIGATION OBSERVERS
   shiny::updateTabsetPanel(session,inputId = "tabs", selected = "geom_type")
   shiny::observeEvent(input$confirmWhere1, {
     reactive_ls$pa_type_chr <- input$pa_type_chr
@@ -53,55 +57,6 @@ server <- function(input,
     shinyjs::hide(selector = '#tabs li a[data-value="ft_type"]')
     shinyjs::show(selector = '#tabs li a[data-value="geom_type"]')
     shiny::updateTabsetPanel(session,inputId = "tabs",selected = "geom_type")
-  })
-  shiny::observeEvent(input$confirmYear, {
-    bnd_sf <- readRDS(reactive_ls$meso2_choices_ls$meso2_type_tb %>%
-                        dplyr::filter(area_bound_yr == input$meso2_bound_yr) %>%
-                        dplyr::pull(source_reference) %>%
-                        paste0(r_data_dir_chr,
-                               "/",
-                               .,".rds"
-                        )
-    ) %>%
-      springtides::filter_if_var_exists(var_chr = "STE_NAME16",
-                           var_val_xxx = "Other Territories",
-                           cond_chr = "!=") %>%
-      purrr::reduce(c("2899","6798","6799","7151"),
-                    .init = .,
-                    ~ .x %>% springtides::filter_if_var_exists(var_chr = "POA_NAME",
-                                                  var_val_xxx = .y,
-                                                  cond_chr = "!=")) %>%
-      purrr::reduce(c("2899","6798","6799","7151"),
-                    .init = .,
-                    ~ .x %>% springtides::filter_if_var_exists(var_chr = "POA_NAME16",
-                                                  var_val_xxx = .y,
-                                                  cond_chr = "!="))
-
-    reactive_ls$meso2_chr_choices_vec <- bnd_sf  %>%
-      dplyr::pull(!!rlang::sym(reactive_ls$meso2_choices_ls$meso2_uid_tb %>%
-                                 dplyr::filter(year == input$meso2_bound_yr) %>%
-                                 dplyr::pull(var_name))) %>%
-      sort()
-    if(ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
-                             lookup_variable = "long_name",
-                             lookup_reference = input$meso2_type_chr,
-                             target_variable = "short_name",
-                             evaluate = F) %in% (pa_r4@lookup_tb@sp_resolution_lup %>%
-                                                 dplyr::filter(area_count >800) %>%
-                                                 dplyr::pull(area_type) %>%
-                                                 unique())){
-      reactive_ls$meso2_filter_choices_chr_vec <- reactive_ls$meso2_chr_choices_vec %>%
-        stringr::str_sub(start=1,end=1) %>%
-        unique() %>%
-        sort()
-    }else{
-      reactive_ls$meso2_filter_choices_chr_vec <- NULL
-    }
-    shinyjs::hide(selector = '#tabs li a[data-value="bound_yr"]')
-    shinyjs::show(selector = '#tabs li a[data-value="ft_value"]')
-    shiny::updateTabsetPanel(session,inputId = "tabs",
-                             selected = "ft_value"
-    )
   })
   shiny::observeEvent(input$returnToWhere2, {
     shinyjs::hide(selector = '#tabs li a[data-value="bound_yr"]')
@@ -164,7 +119,6 @@ server <- function(input,
     reactive_ls$meso2_first_chr <- NULL
     reactive_ls$meso2_chr_choices_vec <- NULL
   })
-
   shiny::observeEvent(input$confirmWhere3, {
     shinyjs::hide(selector = '#tabs li a[data-value="ft_value"]')
     shinyjs::show(selector = '#tabs li a[data-value="pred_yr"]')
@@ -178,6 +132,54 @@ server <- function(input,
     reactive_ls$meso2_bound_yr <- NULL
     reactive_ls$meso2_chr_choices_vec <- NULL
     reactive_ls$meso2_first_chr <- NULL
+  })
+  shiny::observeEvent(input$confirmYear, {
+    bnd_sf <- readRDS(reactive_ls$meso2_choices_ls$meso2_type_tb %>%
+                        dplyr::filter(area_bound_yr == input$meso2_bound_yr) %>%
+                        dplyr::pull(source_reference) %>%
+                        paste0(r_data_dir_chr,
+                               "/",
+                               .,".rds"
+                        )) %>%
+      springtides::filter_if_var_exists(var_chr = "STE_NAME16",
+                                        var_val_xxx = "Other Territories",
+                                        cond_chr = "!=") %>%
+      purrr::reduce(c("2899","6798","6799","7151"),
+                    .init = .,
+                    ~ .x %>% springtides::filter_if_var_exists(var_chr = "POA_NAME",
+                                                               var_val_xxx = .y,
+                                                               cond_chr = "!=")) %>%
+      purrr::reduce(c("2899","6798","6799","7151"),
+                    .init = .,
+                    ~ .x %>% springtides::filter_if_var_exists(var_chr = "POA_NAME16",
+                                                               var_val_xxx = .y,
+                                                               cond_chr = "!="))
+
+    reactive_ls$meso2_chr_choices_vec <- bnd_sf  %>%
+      dplyr::pull(!!rlang::sym(reactive_ls$meso2_choices_ls$meso2_uid_tb %>%
+                                 dplyr::filter(year == input$meso2_bound_yr) %>%
+                                 dplyr::pull(var_name))) %>%
+      sort()
+    if(ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+                             lookup_variable = "long_name",
+                             lookup_reference = input$meso2_type_chr,
+                             target_variable = "short_name",
+                             evaluate = F) %in% (pa_r4@lookup_tb@sp_resolution_lup %>%
+                                                 dplyr::filter(area_count >800) %>%
+                                                 dplyr::pull(area_type) %>%
+                                                 unique())){
+      reactive_ls$meso2_filter_choices_chr_vec <- reactive_ls$meso2_chr_choices_vec %>%
+        stringr::str_sub(start=1,end=1) %>%
+        unique() %>%
+        sort()
+    }else{
+      reactive_ls$meso2_filter_choices_chr_vec <- NULL
+    }
+    shinyjs::hide(selector = '#tabs li a[data-value="bound_yr"]')
+    shinyjs::show(selector = '#tabs li a[data-value="ft_value"]')
+    shiny::updateTabsetPanel(session,inputId = "tabs",
+                             selected = "ft_value"
+    )
   })
   shiny::observeEvent(input$confirmWhen, {
     shinyjs::hide(selector = '#tabs li a[data-value="pred_yr"]')
@@ -219,6 +221,13 @@ server <- function(input,
     shinyjs::show(selector = '#tabs li a[data-value="geom_type"]')
     shiny::updateTabsetPanel(session,inputId = "tabs",selected = "geom_type")
   })
+  ## 3.2 TAB IDENTIFIER
+  getTabIndex <- shiny::reactive({
+    match(input$tabs,
+          c("about_springtides","geom_type","ft_type","bound_yr","ft_value","pred_yr","stat_type","population","review","make_rpt"))
+  })
+  ## 4. RENDER TAB PANEL CONTENT
+  ## 4.1 CONTENT OBSERVERS
   shiny::observe({
     if(is.null(input$meso2_bound_yr)){
       reactive_ls$meso2_bound_yr <- NULL
@@ -249,10 +258,7 @@ server <- function(input,
   shiny::observe({
     print(input$tabs)
   })
-  getTabIndex <- shiny::reactive({
-    match(input$tabs,
-          c("about_springtides","geom_type","ft_type","bound_yr","ft_value","pred_yr","stat_type","population","review","make_rpt"))
-  })
+  ## 4.2 INPUT CONTROLS
   output$predefinedControls <- shiny::renderUI({
     if(input$pa_type_chr !="Predefined boundary")
       return()
@@ -299,7 +305,7 @@ server <- function(input,
       shiny::selectInput("meso2_chr", h3("Feature"),
                          choices = reactive_ls$meso2_chr_choices_vec %>%
                            springtides::subset_vec_if_var_exists(var_val_chr = input$meso2_first_chr,
-                                                    fn = startsWith)
+                                                                 fn = startsWith)
       )
 
     )
@@ -376,8 +382,9 @@ server <- function(input,
                          choices = springtides::get_input_ls(fn = springtides::make_stat_choices_ls,
                                                              args = NULL,
                                                              n = Inf) %>% purrr::flatten_chr() %>% sort())
-      )
+    )
   })
+  ## 4.3 CONTENT TEXT
   output$about_chr <- shiny::renderUI({
     if(getTabIndex()==1){
       h1_chr <- shiny::h1("Welcome")
@@ -530,6 +537,7 @@ server <- function(input,
                     "."))
 
   })
+  ## 5. RENDER OUTPUT
   output$report <- shiny::downloadHandler(
     filename = function() {
       paste('Springtides_Report', sep = '.', switch(
@@ -561,56 +569,56 @@ server <- function(input,
           micro_chr_vec <- input$micro_chr_vec
         }
         params_ls <- list(age_lower = input$age_range_int_vec[1],
-                       age_upper = input$age_range_int_vec[2],
-                       disorder_chr = input$disorder_chr %>%
-                         stringr::str_replace_all(" ","_"),
-                       gdist_dbl = ifelse(input$pa_type_chr=="Predefined boundary",
-                                          NA_real_,
-                                          ifelse(is.null(input$gdist_dbl), NA_real_,input$gdist_dbl)),
-                       gdist_ttime_chr = ifelse(input$pa_type_chr=="Predefined boundary",
-                                                NA_character_
-                                                ,ifelse(is.null(input$gdist_ttime_chr), NA_character_,input$gdist_ttime_chr)),
-                       meso2_bound_yr = ifelse(input$pa_type_chr=="Predefined boundary",
-                                               as.integer(input$meso2_bound_yr),
-                                               NA_real_),
-                       meso2_chr = meso2_chr,
-                       meso2_name_chr = springtides::make_area_name_chr(pa_r4 = pa_r4,
-                                                                        pa_type_chr = input$pa_type_chr,
-                                                                        area_type_chr = meso2_type_chr,
-                                                                        feature_chr = meso2_chr,
-                                                                        area_name_chr = input$area_name_chr),
-                       meso2_type_chr = meso2_type_chr,
-                       micro_chr_vec = micro_chr_vec,
-                       model_end_date = min(input$dateRange[2] %>% lubridate::as_datetime(tz="Australia/Melbourne"), pa_r4@temporal_max),
-                       model_start_date = max(input$dateRange[1] %>% lubridate::as_datetime(tz="Australia/Melbourne"), pa_r4@temporal_min),
-                       n_its_int = input$n_its_int,
-                       pa_type_chr = input$pa_type_chr,
-                       pdf_output_lgl = switch(input$report_format_chr,
-                                               PDF = T,
-                                               HTML = F,
-                                               Word = T),
-                       r_data_dir_chr = r_data_dir_chr,
-                       rendered_by_shiny_lgl = T,
-                       stat_chr = input$stat_chr,
-                       ttime_dbl = ifelse(input$pa_type_chr=="Predefined boundary",
-                                          NA_real_,
-                                          ifelse(is.null(input$ttime_dbl), NA_real_,input$ttime_dbl)),
-                       uncertainty_1_int = input$uncertainty_int[1],
-                       uncertainty_2_int = input$uncertainty_int[2],
-                       user_name_chr = input$user_name_chr)
+                          age_upper = input$age_range_int_vec[2],
+                          disorder_chr = input$disorder_chr %>%
+                            stringr::str_replace_all(" ","_"),
+                          gdist_dbl = ifelse(input$pa_type_chr=="Predefined boundary",
+                                             NA_real_,
+                                             ifelse(is.null(input$gdist_dbl), NA_real_,input$gdist_dbl)),
+                          gdist_ttime_chr = ifelse(input$pa_type_chr=="Predefined boundary",
+                                                   NA_character_
+                                                   ,ifelse(is.null(input$gdist_ttime_chr), NA_character_,input$gdist_ttime_chr)),
+                          meso2_bound_yr = ifelse(input$pa_type_chr=="Predefined boundary",
+                                                  as.integer(input$meso2_bound_yr),
+                                                  NA_real_),
+                          meso2_chr = meso2_chr,
+                          meso2_name_chr = springtides::make_area_name_chr(pa_r4 = pa_r4,
+                                                                           pa_type_chr = input$pa_type_chr,
+                                                                           area_type_chr = meso2_type_chr,
+                                                                           feature_chr = meso2_chr,
+                                                                           area_name_chr = input$area_name_chr),
+                          meso2_type_chr = meso2_type_chr,
+                          micro_chr_vec = micro_chr_vec,
+                          model_end_date = min(input$dateRange[2] %>% lubridate::as_datetime(tz="Australia/Melbourne"), pa_r4@temporal_max),
+                          model_start_date = max(input$dateRange[1] %>% lubridate::as_datetime(tz="Australia/Melbourne"), pa_r4@temporal_min),
+                          n_its_int = input$n_its_int,
+                          pa_type_chr = input$pa_type_chr,
+                          pdf_output_lgl = switch(input$report_format_chr,
+                                                  PDF = T,
+                                                  HTML = F,
+                                                  Word = T),
+                          r_data_dir_chr = r_data_dir_chr,
+                          rendered_by_shiny_lgl = T,
+                          stat_chr = input$stat_chr,
+                          ttime_dbl = ifelse(input$pa_type_chr=="Predefined boundary",
+                                             NA_real_,
+                                             ifelse(is.null(input$ttime_dbl), NA_real_,input$ttime_dbl)),
+                          uncertainty_1_int = input$uncertainty_int[1],
+                          uncertainty_2_int = input$uncertainty_int[2],
+                          user_name_chr = input$user_name_chr)
         params_ls$title_chr <- paste0("Predicted ",
-                                   springtides::tf_stat_chr(stat_chr = params_ls$stat_chr %>% tolower(),
-                                                            disorder_chr = params_ls$disorder_chr),
-                                   " in young people aged ",
-                                   params_ls$age_lower,
-                                   " to ",
-                                   params_ls$age_upper,
-                                   " for ",
-                                   params_ls$meso2_name_chr,
-                                   " between ",
-                                   params_ls$model_start_date %>% format("%d %B %Y"),
-                                   " and ",
-                                   params_ls$model_end_date %>% format("%d %B %Y"))
+                                      springtides::tf_stat_chr(stat_chr = params_ls$stat_chr %>% tolower(),
+                                                               disorder_chr = params_ls$disorder_chr),
+                                      " in young people aged ",
+                                      params_ls$age_lower,
+                                      " to ",
+                                      params_ls$age_upper,
+                                      " for ",
+                                      params_ls$meso2_name_chr,
+                                      " between ",
+                                      params_ls$model_start_date %>% format("%d %B %Y"),
+                                      " and ",
+                                      params_ls$model_end_date %>% format("%d %B %Y"))
         out <- rmarkdown::render(paste0(temp_dir_chr,'/report.Rmd'),
                                  switch(input$report_format_chr,
                                         PDF = rmarkdown::pdf_document(),
@@ -620,7 +628,7 @@ server <- function(input,
                                         Word = rmarkdown::word_document()),
                                  params = params_ls,
                                  envir = new.env(parent = globalenv())
-                                 )
+        )
         file.rename(out, file)
       })
     }

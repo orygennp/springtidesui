@@ -15,7 +15,7 @@ params:
   n_its_int: 10
   pa_type_chr: Predefined boundary
   pdf_output_lgl: !r T
-  r_data_dir_chr: !r normalizePath("C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format")
+  r_data_dir_chr: !r normalizePath("data")
   rendered_by_shiny_lgl: !r F
   stat_chr: Prevalence - Annual
   title_chr: Springtides report
@@ -55,7 +55,6 @@ header-includes:
 library(magrittr)
 library(kableExtra)
 options(scipen=999)
-###
 if(params$rendered_by_shiny_lgl)
   shiny::setProgress(0.1, message = "Step one: Processing user inputs")
 if(is.na(params$meso2_type_chr)){
@@ -103,12 +102,6 @@ sim_results_ls <- ready4sim::runSimulation(x = sim_data_r4,
                                            group_by = input_ls$grouping_for_sim)
 if(params$rendered_by_shiny_lgl)
   shiny::setProgress(0.75, message = "Step four: Rendering report")
-###
-# project_data_path_chr <-"C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format" %>% stringr::str_replace("R_Format","Project")
-# input_ls <- readRDS(paste0(project_data_path_chr,"/input_ls_4.rds"))
-# sim_data_r4 <- readRDS(paste0(project_data_path_chr,"/sim_data_r4_4.rds"))
-# sim_results_ls <- readRDS(paste0(project_data_path_chr,"/sim_results_ls_4.rds"))
-###
 end_year_dbl <- sim_data_r4@model_end_date %>% lubridate::year()
 n_its_int <- input_ls$n_its_int
 start_year_dbl <- sim_data_r4@model_start_date %>% lubridate::year()
@@ -184,19 +177,13 @@ pnt_coord_2_chr <- ifelse(params$meso2_type_chr=="HSS"," The point coordinate da
 The geometry data include data on the boundaries of a range of Australian spatial units (Table 1)`r pnt_coord_1_chr`. The boundary data source files are available for download direct from their publisher in the form of ESRI shape files.`r pnt_coord_2_chr` 
 
 
-```{r echo=F, warning=F}
-table_cnt_dbl <-0
-```
-
 ```{r echo=F, warning=F, bootstrap.show.code = FALSE}
-# table_cnt_dbl <- table_cnt_dbl + 1
 input_tables_ls$boundary_input_lup_tb
 ```
 
 
 ```{r echo=F, warning=F, bootstrap.show.code = FALSE}
 if(input_ls$pa_r4@area_type=="HSS"){
-  # table_cnt_dbl <- table_cnt_dbl +1
   input_tables_ls$point_crd_input_kb
 }
 ```
@@ -214,7 +201,6 @@ input_tables_ls$attributes_input_kb
 The values of the epidemiology parameters in the Springtides Replication Dataset along with details about the relevant evidence sources are summarised in Table `r length(input_tables_ls)`.
 
 ```{r echo=F, warning=F}
-#table_cnt_dbl <- table_cnt_dbl + 1
 input_tables_ls$epi_inputs_kb
 ```
 
