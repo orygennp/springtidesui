@@ -3,17 +3,17 @@ params:
   age_lower: 16
   age_upper: 25
   disorder_chr: Any_Affective_Disorder
-  gdist_dbl: !r NA_real_
-  gdist_ttime_chr: !r NA_character_
+  gdist_dbl: 20
+  gdist_ttime_chr: Geometric distance
   meso2_bound_yr: 2011
-  meso2_chr: "0800"
-  meso2_name_chr: "0800 Postal Area"
-  meso2_type_chr: POA
-  micro_chr_vec: !r NA_character_
+  meso2_chr: HSS
+  meso2_name_chr: Headspace Services
+  meso2_type_chr: HSS
+  micro_chr_vec: !r c("Glenroy","Sunshine")
   model_end_date: !r Sys.Date()
   model_start_date: !r springtides::aus_pa_r4@temporal_min #+ lubridate::years(2)
   n_its_int: 10
-  pa_type_chr: Predefined boundary
+  pa_type_chr: HSS
   pdf_output_lgl: !r T
   r_data_dir_chr: !r normalizePath("C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format")
   rendered_by_shiny_lgl: !r F
