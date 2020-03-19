@@ -62,7 +62,7 @@ output_params_ls <- springtides::make_output_params_ls(input_params_ls = params)
 ```
 
 # Purpose
-The purpose of this report is to aid developpers using the Springtides app by providing transparency about how input values used in rendering functions are translated into output values that are the building blocks from which outputted reports can be created. This brief report displays the input parameter values used in the function call to create this report and the output values created when processing those inputs. Key structural features of this report such as the document format, document title, author list and layout are also determined by the inputs to the function that rendered this report.
+This brief report displays the input parameter values used in the function call to create this report. Key structural features of this report such as the document format, document title, author list and layout are also determined by the inputs to the function that rendered this report.
 
 ## Inputs
 The inputs that were used to generated this report are a combination of default values contained in the YAML tags at the start of a template RMD document and any values specified in a list object passed to the "params" argument in a call to the render function from the rmarkdown package. The YAML tags contain the default values, but these defaults can be overwritten in the function call.
@@ -71,14 +71,5 @@ The input parameter values are contained in an object called "params" and are li
 
 ```{r eval=T}
 params
-```
-
-## Outputs
-These inputs are used to create the building blocks (objects and associated paramter values) that can be assembled (via an RMD report template) into a Springtides report. These building blocks are created by a call to the "make_output_params_ls" function and are best stored in a list object (such as "output_params_ls" below) that can be referenced throughout any template RMD document that you create for your own custom reports.
-
-The values of the output_params_ls object are reported below.
-
-```{r eval=T}
-output_params_ls
 ```
 

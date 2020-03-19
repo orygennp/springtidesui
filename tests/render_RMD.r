@@ -1,5 +1,4 @@
 library(magrittr)
-library(kableExtra)
 template_path_chr <- system.file("Inputs_And_Outputs.rmd", package = "springtidesui")
 temp_dir_chr <- tempdir()
 file.copy(template_path_chr, paste0(temp_dir_chr,'/report.Rmd'), overwrite = TRUE)
@@ -15,7 +14,8 @@ params_ls$r_data_dir_chr <- r_data_path_chr
 params_ls$input_ls_path_chr <- input_ls_path_chr
 params_ls$sim_data_r4_path_chr <- sim_data_r4_path_chr
 params_ls$sim_results_ls_path_chr <- sim_results_ls_path_chr
-input<-list(report_format_chr = "PDF")
+input <-list(report_format_chr = "HTML")
+params_ls$pdf_output_lgl <- ifelse(input$report_format_chr=="PDF",T,F)
 out <- rmarkdown::render(paste0(temp_dir_chr,'/report.Rmd'),
                          switch(input$report_format_chr,
                                 PDF = rmarkdown::pdf_document(),

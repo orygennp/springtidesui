@@ -12,26 +12,26 @@
 #'  }
 #' }
 #' @seealso
-#'  \code{\link[shiny]{reactiveValues}},\code{\link[shiny]{updateTabsetPanel}},\code{\link[shiny]{observeEvent}},\code{\link[shiny]{observe}},\code{\link[shiny]{reactive}},\code{\link[shiny]{renderUI}},\code{\link[shiny]{tag}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{checkboxGroupInput}},\code{\link[shiny]{actionButton}},\code{\link[shiny]{dateRangeInput}},\code{\link[shiny]{validate}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{HTML}},\code{\link[shiny]{downloadHandler}}
+#'  \code{\link[shiny]{reactiveValues}},\code{\link[shiny]{updateTabsetPanel}},\code{\link[shiny]{observeEvent}},\code{\link[shiny]{reactive}},\code{\link[shiny]{observe}},\code{\link[shiny]{renderUI}},\code{\link[shiny]{tag}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{checkboxGroupInput}},\code{\link[shiny]{actionButton}},\code{\link[shiny]{dateRangeInput}},\code{\link[shiny]{validate}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{HTML}},\code{\link[shiny]{downloadHandler}}
 #'  \code{\link[shinyjs]{visibilityFuncs}}
 #'  \code{\link[dplyr]{filter}},\code{\link[dplyr]{pull}}
+#'  \code{\link[ready4utils]{data_get}}
 #'  \code{\link[springtides]{filter_if_var_exists}},\code{\link[springtides]{get_input_vec}},\code{\link[springtides]{get_disorder_choices_chr_vec}},\code{\link[springtides]{subset_vec_if_var_exists}},\code{\link[springtides]{get_age_range_choices_int_vec}},\code{\link[springtides]{get_input_ls}},\code{\link[springtides]{make_stat_choices_ls}},\code{\link[springtides]{make_area_name_chr}},\code{\link[springtides]{tf_stat_chr}}
 #'  \code{\link[purrr]{reduce}},\code{\link[purrr]{map}},\code{\link[purrr]{flatten}}
 #'  \code{\link[rlang]{sym}}
-#'  \code{\link[ready4utils]{data_get}}
 #'  \code{\link[stringr]{str_sub}},\code{\link[stringr]{str_replace}}
 #'  \code{\link[lubridate]{is.Date}},\code{\link[lubridate]{as_date}}
 #'  \code{\link[rmarkdown]{render}},\code{\link[rmarkdown]{pdf_document}},\code{\link[rmarkdown]{word_document}}
 #'  \code{\link[knitrBootstrap]{bootstrap_document}}
 #' @rdname server
 #' @export
-#' @importFrom shiny reactiveValues updateTabsetPanel observeEvent observe reactive renderUI tagList selectInput h3 checkboxGroupInput actionButton dateRangeInput validate need sliderInput h1 p HTML downloadHandler
+#' @importFrom shiny reactiveValues updateTabsetPanel observeEvent reactive observe renderUI tagList selectInput h3 checkboxGroupInput actionButton dateRangeInput validate need sliderInput h1 p HTML downloadHandler
 #' @importFrom shinyjs hide show
 #' @importFrom dplyr filter pull
+#' @importFrom ready4utils data_get
 #' @importFrom springtides filter_if_var_exists get_input_vec get_disorder_choices_chr_vec subset_vec_if_var_exists get_age_range_choices_int_vec get_input_ls make_stat_choices_ls make_area_name_chr tf_stat_chr
 #' @importFrom purrr reduce map_chr flatten_chr
 #' @importFrom rlang sym
-#' @importFrom ready4utils data_get
 #' @importFrom stringr str_sub str_replace_all
 #' @importFrom lubridate is.Date as_datetime
 #' @importFrom rmarkdown render pdf_document word_document
@@ -40,8 +40,12 @@ server <- function(input,
                    output,
                    session) {
   ## 1. LOAD CONTEXT DATA
-  data("aus_pa_r4", package = "springtides")
-  pa_r4 <- aus_pa_r4
+  data_pckg_chr <- "springtides"
+  pa_r4_chr <- "aus_pa_r4"
+  data(list = input_params_ls$pa_r4_chr,
+        package = data_pckg_chr,
+        envir = environment())
+  eval(parse(text = paste0("pa_r4<-",input_params_ls$pa_r4_chr)))
   ## 2. CREATE REACTIVE LIST
   reactive_ls <- shiny::reactiveValues()
   ## 3. SET UP TAB PANEL NAVIGATION
@@ -570,6 +574,7 @@ server <- function(input,
         }
         params_ls <- list(age_lower = input$age_range_int_vec[1],
                           age_upper = input$age_range_int_vec[2],
+                          data_pckg_chr = data_pckg_chr,
                           disorder_chr = input$disorder_chr %>%
                             stringr::str_replace_all(" ","_"),
                           gdist_dbl = ifelse(input$pa_type_chr=="Predefined boundary",
@@ -592,6 +597,7 @@ server <- function(input,
                           model_end_date = min(input$dateRange[2] %>% lubridate::as_datetime(tz="Australia/Melbourne"), pa_r4@temporal_max),
                           model_start_date = max(input$dateRange[1] %>% lubridate::as_datetime(tz="Australia/Melbourne"), pa_r4@temporal_min),
                           n_its_int = input$n_its_int,
+                          pa_r4_chr = pa_r4_chr,
                           pa_type_chr = input$pa_type_chr,
                           pdf_output_lgl = switch(input$report_format_chr,
                                                   PDF = T,
