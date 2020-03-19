@@ -2,10 +2,11 @@
 params:
   age_lower: 16
   age_upper: 25
+  data_pckg_chr: springtides
   disorder_chr: Any_Affective_Disorder
   gdist_dbl: !r NA_real_
   gdist_ttime_chr: !r NA_character_
-  input_ls_path_chr: !r NA_character_
+  input_ls_path_chr: "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/Project/input_ls_4.rds"
   meso2_bound_yr: 2011
   meso2_chr: "0800"
   meso2_name_chr: "0800 Postal Area"
@@ -17,10 +18,10 @@ params:
   pa_r4_chr: aus_pa_r4
   pa_type_chr: HSS
   pdf_output_lgl: !r T
-  r_data_dir_chr: !r NA_character_
+  r_data_dir_chr: "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format"
   rendered_by_shiny_lgl: !r F
-  sim_data_r4_path_chr: !r NA_character_
-  sim_results_ls_path_chr: !r NA_character_
+  sim_data_r4_path_chr: "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/Project/sim_data_r4_4.rds"
+  sim_results_ls_path_chr: "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/Project/sim_results_ls_4.rds"
   stat_chr: Prevalence - Annual
   title_chr: Springtides report
   ttime_dbl: !r NA_real_
@@ -75,7 +76,7 @@ These inputs are used to create the building blocks (objects and associated para
 
 The values of the output_params_ls object are reported below.
 
-```{r echo=F, warning=F, message=F, eval=T}
+```{r warning=F, message=F, eval=T}
 output_params_ls <- springtides::make_output_params_ls(input_params_ls = params)
 output_params_ls
 ```

@@ -8,6 +8,7 @@ input_ls_path_chr <- paste0(project_data_path_chr,"/input_ls_4.rds")
 sim_data_r4_path_chr <- paste0(project_data_path_chr,"/sim_data_r4_4.rds")
 sim_results_ls_path_chr <- paste0(project_data_path_chr,"/sim_results_ls_4.rds")
 params_ls <- readRDS(paste0(project_data_path_chr,"/params_4.rds"))
+params_ls$data_pckg_chr <- "springtides"
 params_ls$pa_r4_chr <- "aus_pa_r4"
 params_ls$r_data_dir_chr <- r_data_path_chr
 params_ls$input_ls_path_chr <- input_ls_path_chr
