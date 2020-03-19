@@ -37,8 +37,11 @@ author:
  - "`r params$authorship_2_chr`"
 date: "`r format.Date(Sys.Date(),'%B %d, %Y')`"
 output:
+  knitrBootstrap::bootstrap_document:
+    fig_caption: true
   html_document:
     df_print: paged
+    fig_caption: true
   pdf_document:
     fig_caption: yes
 header-includes: 
