@@ -1,7 +1,10 @@
 ---
 params:
+  add_title_lgl: !r F
   age_lower: 16
   age_upper: 25
+  authorship_1_chr: !r NA_character_
+  authorship_2_chr: !r NA_character_
   data_pckg_chr: springtides
   disorder_chr: Any_Affective_Disorder
   gdist_dbl: !r NA_real_
