@@ -42,10 +42,10 @@ server <- function(input,
   ## 1. LOAD CONTEXT DATA
   data_pckg_chr <- "springtides"
   pa_r4_chr <- "aus_pa_r4"
-  data(list = input$pa_r4_chr,
+  data(list = pa_r4_chr,
         package = data_pckg_chr,
         envir = environment())
-  eval(parse(text = paste0("pa_r4<-",input$pa_r4_chr)))
+  eval(parse(text = paste0("pa_r4<-",pa_r4_chr)))
   ## 2. CREATE REACTIVE LIST
   reactive_ls <- shiny::reactiveValues()
   ## 3. SET UP TAB PANEL NAVIGATION

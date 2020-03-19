@@ -1,8 +1,8 @@
 library(shiny)
+library(springtidesui)
 # library(shinymanager)
 # library(shinyjs)
 # library(kableExtra)
-library(springtidesui)
 #shiny::shinyOptions(
 credentials_tb <- data.frame(
   user = c("1", "orygenNP", "orygenHSR", "OrygenPol","RFWN"),
@@ -15,7 +15,7 @@ sec_server <- function(input,
                           output,
                           session){
   result_auth <- shinymanager::secure_server(check_credentials = shinymanager::check_credentials(credentials_tb))
-  server_chr_vec <- deparse(server)
+  server_chr_vec <- deparse(springtidesui::server)
   eval(parse(text = server_chr_vec[3:(length(server_chr_vec)-1)]))
   output$res_auth <- shiny::renderPrint({
     shiny::reactiveValuesToList(result_auth)
