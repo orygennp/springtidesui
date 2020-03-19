@@ -3,13 +3,13 @@ params:
   age_lower: 16
   age_upper: 25
   disorder_chr: Any_Affective_Disorder
-  gdist_dbl: 20
-  gdist_ttime_chr: Geometric distance
+  gdist_dbl: !r NA_real_
+  gdist_ttime_chr: !r NA_character_
   meso2_bound_yr: 2011
-  meso2_chr: HSS
-  meso2_name_chr: Headspace Services
-  meso2_type_chr: HSS
-  micro_chr_vec: !r c("Glenroy","Sunshine")
+  meso2_chr: "0800"
+  meso2_name_chr: "0800 Postal Area"
+  meso2_type_chr: POA
+  micro_chr_vec: !r NA_character_
   model_end_date: !r Sys.Date()
   model_start_date: !r springtides::aus_pa_r4@temporal_min #+ lubridate::years(2)
   n_its_int: 10
@@ -112,7 +112,7 @@ tfd_start_date_chr <- sim_data_r4@model_start_date %>% format("%d %B %Y")
 pdf_output_lgl <- params$pdf_output_lgl
 if(pdf_output_lgl)
   options(knitr.table.format = "latex")
-meso2_name_chr <- params$meso2_name_chr
+#meso2_name_chr <- params$meso2_name_chr
 input_tables_ls <- springtides::make_aus_input_tables_ls(input_ls = input_ls,
                                             sim_data_r4 = sim_data_r4,
                                             stat_chr = params$stat_chr,
