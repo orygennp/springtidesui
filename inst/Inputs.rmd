@@ -4,7 +4,7 @@ params:
   age_lower: 16
   age_upper: 25
   authorship_1_chr: ""
-  authorship_1_chr: ""
+  authorship_2_chr: ""
   data_pckg_chr: springtides
   disorder_chr: !r NA_character_
   gdist_dbl: !r NA_real_
