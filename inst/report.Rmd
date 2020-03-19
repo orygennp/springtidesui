@@ -20,7 +20,7 @@ params:
   pa_r4_chr: aus_pa_r4
   pa_type_chr: !r NA_character_
   pdf_output_lgl: !r F
-  r_data_dir_chr: !r NA_character_
+  r_data_dir_chr: "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format"
   rendered_by_shiny_lgl: !r F
   sim_data_r4_path_chr: !r NA_character_
   sim_results_ls_path_chr: !r NA_character_
