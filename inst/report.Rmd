@@ -4,6 +4,7 @@ params:
   age_lower: 16
   age_upper: 25
   authorship_1_chr: ""
+  authorship_1_chr: ""
   data_pckg_chr: springtides
   disorder_chr: !r NA_character_
   gdist_dbl: !r NA_real_
@@ -20,7 +21,7 @@ params:
   pa_r4_chr: aus_pa_r4
   pa_type_chr: !r NA_character_
   pdf_output_lgl: !r F
-  r_data_dir_chr: "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format"
+  r_data_dir_chr: "data"
   rendered_by_shiny_lgl: !r F
   sim_data_r4_path_chr: !r NA_character_
   sim_results_ls_path_chr: !r NA_character_

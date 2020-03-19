@@ -16,11 +16,11 @@
 #'  \code{\link[shinyjs]{visibilityFuncs}}
 #'  \code{\link[dplyr]{filter}},\code{\link[dplyr]{pull}}
 #'  \code{\link[ready4utils]{data_get}}
-#'  \code{\link[springtides]{filter_if_var_exists}},\code{\link[springtides]{get_input_vec}},\code{\link[springtides]{get_disorder_choices_chr_vec}},\code{\link[springtides]{subset_vec_if_var_exists}},\code{\link[springtides]{get_age_range_choices_int_vec}},\code{\link[springtides]{get_input_ls}},\code{\link[springtides]{make_stat_choices_ls}},\code{\link[springtides]{make_area_name_chr}},\code{\link[springtides]{tf_stat_chr}}
+#'  \code{\link[springtides]{c("filter_if_var_exists", "filter_if_var_exists")}},\code{\link[springtides]{c("get_input_vec", "get_input_vec")}},\code{\link[springtides]{c("get_disorder_choices_chr_vec", "get_disorder_choices_chr_vec")}},\code{\link[springtides]{c("subset_vec_if_var_exists", "subset_vec_if_var_exists")}},\code{\link[springtides]{aus_pa_r4}},\code{\link[springtides]{c("get_age_range_choices_int_vec", "get_age_range_choices_int_vec")}},\code{\link[springtides]{c("get_input_ls", "get_input_ls")}},\code{\link[springtides]{c("make_stat_choices_ls", "make_stat_choices_ls")}},\code{\link[springtides]{c("make_area_name_chr", "make_area_name_chr")}},\code{\link[springtides]{c("tf_stat_chr", "tf_stat_chr")}}
 #'  \code{\link[purrr]{reduce}},\code{\link[purrr]{map}},\code{\link[purrr]{flatten}}
 #'  \code{\link[rlang]{sym}}
 #'  \code{\link[stringr]{str_sub}},\code{\link[stringr]{str_replace}}
-#'  \code{\link[lubridate]{is.Date}},\code{\link[lubridate]{as_date}}
+#'  \code{\link[lubridate]{period}},\code{\link[lubridate]{is.Date}},\code{\link[lubridate]{as_date}}
 #'  \code{\link[rmarkdown]{render}},\code{\link[rmarkdown]{pdf_document}},\code{\link[rmarkdown]{word_document}}
 #'  \code{\link[knitrBootstrap]{bootstrap_document}}
 #' @rdname server
@@ -29,11 +29,11 @@
 #' @importFrom shinyjs hide show
 #' @importFrom dplyr filter pull
 #' @importFrom ready4utils data_get
-#' @importFrom springtides filter_if_var_exists get_input_vec get_disorder_choices_chr_vec subset_vec_if_var_exists get_age_range_choices_int_vec get_input_ls make_stat_choices_ls make_area_name_chr tf_stat_chr
+#' @importFrom springtides filter_if_var_exists get_input_vec get_disorder_choices_chr_vec subset_vec_if_var_exists aus_pa_r4 get_age_range_choices_int_vec get_input_ls make_stat_choices_ls make_area_name_chr tf_stat_chr
 #' @importFrom purrr reduce map_chr flatten_chr
 #' @importFrom rlang sym
 #' @importFrom stringr str_sub str_replace_all
-#' @importFrom lubridate is.Date as_datetime
+#' @importFrom lubridate years is.Date as_datetime
 #' @importFrom rmarkdown render pdf_document word_document
 #' @importFrom knitrBootstrap bootstrap_document
 server <- function(input,
@@ -340,8 +340,8 @@ server <- function(input,
     shiny::tagList(
       shiny::dateRangeInput('dateRange',
                             label = 'Start and end dates (yyyy-mm-dd)',
-                            start = pa_r4@temporal_min,
-                            end = Sys.Date(),
+                            start = Sys.Date(),
+                            end = (Sys.Date() + lubridate::years(5)) %>% min(springtides::aus_pa_r4@temporal_max),
                             min = pa_r4@temporal_min,
                             max = pa_r4@temporal_max
       )
