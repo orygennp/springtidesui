@@ -17,7 +17,7 @@ params:
   n_its_int: 10
   pa_r4_chr: aus_pa_r4
   pa_type_chr: HSS
-  pdf_output_lgl: !r T
+  pdf_output_lgl: !r F
   r_data_dir_chr: "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format"
   rendered_by_shiny_lgl: !r F
   sim_data_r4_path_chr: "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/Project/sim_data_r4_4.rds"
@@ -58,6 +58,7 @@ header-includes:
 ```{r echo=F, warning=F, message=F, eval=T}
 library(magrittr)
 library(kableExtra)
+output_params_ls <- springtides::make_output_params_ls(input_params_ls = params)
 ```
 
 # Purpose
@@ -68,16 +69,16 @@ The inputs that were used to generated this report are a combination of default 
 
 The input parameter values are contained in an object called "params" and are listed here:
 
-```{r eval=T}
+```{r eval=T, results='asis'}
 params
 ```
 
-These inputs are used to create the building blocks (objects and associated paramter values) that are used to create a Springtides report. These building blocks are created by a call to the "make_output_params_ls" function and are best stored in a list object (such as "output_params_ls" below) that can be referenced throughout any template RMD document that you create for your own custom reports.
+## Outputs
+These inputs are used to create the building blocks (objects and associated paramter values) that can be assembled (via an RMD report template) into a Springtides report. These building blocks are created by a call to the "make_output_params_ls" function and are best stored in a list object (such as "output_params_ls" below) that can be referenced throughout any template RMD document that you create for your own custom reports.
 
 The values of the output_params_ls object are reported below.
 
-```{r warning=F, message=F, eval=T}
-output_params_ls <- springtides::make_output_params_ls(input_params_ls = params)
+```{r eval=T, results='asis'}
 output_params_ls
 ```
 
