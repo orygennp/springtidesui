@@ -34,7 +34,7 @@ if(interactive()){
  \code{\link[shinyjs]{visibilityFuncs}}
  \code{\link[dplyr]{filter}},\code{\link[dplyr]{pull}}
  \code{\link[ready4utils]{data_get}}
- \code{\link[springtides]{c("filter_if_var_exists", "filter_if_var_exists")}},\code{\link[springtides]{c("get_input_vec", "get_input_vec")}},\code{\link[springtides]{c("get_disorder_choices_chr_vec", "get_disorder_choices_chr_vec")}},\code{\link[springtides]{c("subset_vec_if_var_exists", "subset_vec_if_var_exists")}},\code{\link[springtides]{aus_pa_r4}},\code{\link[springtides]{c("get_age_range_choices_int_vec", "get_age_range_choices_int_vec")}},\code{\link[springtides]{c("get_input_ls", "get_input_ls")}},\code{\link[springtides]{c("make_stat_choices_ls", "make_stat_choices_ls")}},\code{\link[springtides]{c("make_area_name_chr", "make_area_name_chr")}},\code{\link[springtides]{c("tf_stat_chr", "tf_stat_chr")}}
+ \code{\link[springtides]{filter_if_var_exists}},\code{\link[springtides]{get_input_vec}},\code{\link[springtides]{get_disorder_choices_chr_vec}},\code{\link[springtides]{subset_vec_if_var_exists}},\code{\link[springtides]{get_age_range_choices_int_vec}},\code{\link[springtides]{get_input_ls}},\code{\link[springtides]{make_stat_choices_ls}},\code{\link[springtides]{make_area_name_chr}},\code{\link[springtides]{tf_stat_chr}}
  \code{\link[purrr]{reduce}},\code{\link[purrr]{map}},\code{\link[purrr]{flatten}}
  \code{\link[rlang]{sym}}
  \code{\link[stringr]{str_sub}},\code{\link[stringr]{str_replace}}
