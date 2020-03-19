@@ -1,6 +1,6 @@
 Package: springtidesui
 Title: Functions and Shiny app to create a user interface for the Springtides youth mental health epidemiology model.
-Version: 0.0.0.9034
+Version: 0.0.0.9035
 Authors@R: c(
     person(given = "Matthew",family = "Hamilton",email = "matthew.hamilton@orygen.org.au", role = c("aut", "cre"),comment = c(ORCID = "0000-0001-7407-9194")), 
     person(given = "Ruby",family = "Callanan",email = "ruby.callanan@orygen.org.au", role = c("rev")), 

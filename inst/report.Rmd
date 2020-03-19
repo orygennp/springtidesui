@@ -59,7 +59,7 @@ header-includes:
 ```{r echo=F, warning=F, message=F, eval=T}
 library(magrittr)
 library(kableExtra)
-output_params_ls <- make_output_params_ls(input_params_ls = params)
+output_params_ls <- springtides::make_output_params_ls(input_params_ls = params)
 ```
 
 Not for citation or public dissemination. 
