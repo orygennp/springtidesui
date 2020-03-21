@@ -1,27 +1,27 @@
 ---
 params:
-  add_title_lgl: !r F
-  age_lower: 16
-  age_upper: 25
-  authorship_1_chr: ""
-  authorship_2_chr: ""
+  age_lower: !r NA_real_
+  age_upper: !r NA_real_
+  authorship_1_chr: ''
+  authorship_2_chr: ''
   data_pckg_chr: springtides
   disorder_chr: !r NA_character_
+  format_chr: !r NA_character_
   gdist_dbl: !r NA_real_
   gdist_ttime_chr: !r NA_character_
   input_ls_path_chr: !r NA_character_
   meso2_bound_yr: !r NA_real_
   meso2_chr: !r NA_character_
   meso2_name_chr: !r NA_character_
-  meso2_type_chr: POA
+  meso2_type_chr: !r NA_character_
   micro_chr_vec: !r NA_character_
   model_end_date: !r Sys.Date()
-  model_start_date: !r springtides::aus_pa_r4@temporal_min #+ lubridate::years(2)
+  model_start_date: !r springtides::aus_pa_r4@temporal_min
   n_its_int: !r NA_real_
   pa_r4_chr: aus_pa_r4
   pa_type_chr: !r NA_character_
   pdf_output_lgl: !r F
-  r_data_dir_chr: "data"
+  r_data_dir_chr: data
   rendered_by_shiny_lgl: !r F
   sim_data_r4_path_chr: !r NA_character_
   sim_results_ls_path_chr: !r NA_character_
@@ -32,33 +32,31 @@ params:
   uncertainty_2_int: 0.975
   user_name_chr: !r NA_character_
 title: "`r params$title_chr`"
-author: 
- -  "`r params$authorship_1_chr`"
- - "`r params$authorship_2_chr`"
+author:
+  - "`r params$authorship_1_chr`"
+  - "`r params$authorship_2_chr`"
 date: "`r format.Date(Sys.Date(),'%B %d, %Y')`"
 output:
-  knitrBootstrap::bootstrap_document:
-    fig_caption: true
-  html_document:
-    df_print: paged
-    fig_caption: true
+  word_document: default
   pdf_document:
     fig_caption: yes
-header-includes: 
-  - \usepackage{booktabs} 
-  - \usepackage{longtable} 
-  - \usepackage{array} 
-  - \usepackage{multirow} 
-  - \usepackage{wrapfig} 
-  - \usepackage{float}
-  - \usepackage{colortbl} 
-  - \usepackage{pdflscape} 
-  - \usepackage{tabu} 
-  - \usepackage{threeparttable} 
-  - \usepackage{threeparttablex}
-  - \usepackage[normalem]{ulem} 
-  - \usepackage{makecell} 
-  - \usepackage{xcolor}
+  html_document:
+    df_print: paged
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage{xcolor}
 ---
 
 ```{r echo=F, warning=F, message=F, eval=T}
