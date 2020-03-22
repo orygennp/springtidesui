@@ -526,7 +526,7 @@ server <- function(input,
     shiny::h1("Who?")
   })
   output$who_instr_chr <- shiny::renderUI({
-    if(getTabIndex()!=9)
+    if(getTabIndex()!=8)
       return()
     shiny::p("Now select the disorder or behaviour and age range of the population that you would like to profile.")
   })
