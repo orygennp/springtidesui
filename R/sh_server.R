@@ -579,7 +579,7 @@ server <- function(input,
                           data_pckg_chr = data_pckg_chr,
                           disorder_chr = input$disorder_chr %>%
                             stringr::str_replace_all(" ","_"),
-                          format_chr <- input$report_format_chr,
+                          format_chr = input$report_format_chr,
                           gdist_dbl = ifelse(input$pa_type_chr=="Predefined boundary",
                                              NA_real_,
                                              ifelse(is.null(input$gdist_dbl), NA_real_,input$gdist_dbl)),
@@ -631,13 +631,13 @@ server <- function(input,
         out <- rmarkdown::render(paste0(temp_dir_chr,'/report.Rmd'),
                                  switch(input$report_format_chr,
                                         PDF = rmarkdown::pdf_document(),
-                                        HTML = knitrBootstrap::bootstrap_document(title = params$title_chr,
-                                                                                  theme = "journal",
-                                                                                  menu = F),
+                                        HTML = rmarkdown::html_document(toc=T,
+                                                                        toc_float = T,
+                                                                        number_sections = T,
+                                                                        theme = "journal"),
                                         Word = rmarkdown::word_document()),
                                  params = params_ls,
-                                 envir = new.env(parent = globalenv())
-        )
+                                 envir = new.env())
         file.rename(out, file)
       })
     }
