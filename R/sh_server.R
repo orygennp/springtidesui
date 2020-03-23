@@ -486,7 +486,7 @@ server <- function(input,
   output$when_instr_chr <- shiny::renderUI({
     if(getTabIndex()!=6)
       return()
-    shiny::p("Now select the year for which you would like to generate a prediction. The predictions for this year will be compared to predictions for the most recent census year.")
+    shiny::p("Now select the dates for which you would like to generate a prediction. The dates must be between July 2016 and June 2031.")
   })
   output$when_selected_chr <- shiny::renderUI({
     if(getTabIndex()<7)

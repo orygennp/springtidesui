@@ -1,5 +1,6 @@
 library(shiny)
 library(springtidesui)
+options(shiny.maxRequestSize=30*1024^2)
 # library(shinymanager)
 # library(shinyjs)
 # library(kableExtra)
