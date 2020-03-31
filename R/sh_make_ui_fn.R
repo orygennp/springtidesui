@@ -169,10 +169,11 @@ make_ui_body_fn <- function(){
                                                         shiny::p(),
                                                         shiny::h1("Customise report"),
                                                         shiny::textInput("user_name_chr", "Your name / your organisation's name", value = "Anonymous User"),
-                                                        shiny::conditionalPanel(
-                                                          condition = "input.pa_type_chr != \"Predefined boundary\"",
-                                                          shiny::textInput("area_name_chr", "Name of the custom geometry that you are profiling", value = "Custom Area")
-                                                        ),
+                                                        shiny::uiOutput("areaNameControls"),
+                                                        # shiny::conditionalPanel(
+                                                        #   condition = "input.pa_type_chr != \"Predefined boundary\"",
+                                                        #   shiny::textInput("area_name_chr", "Name of the custom geometry that you are profiling", value = "Custom Area")
+                                                        # ),
                                                         shiny::p("Note: It will take between 5 and 20 minutes to generate your report."),
                                                         shiny::radioButtons("report_format_chr","Report format:",
                                                                             c("PDF" = "PDF",

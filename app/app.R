@@ -3,7 +3,7 @@ library(springtidesui)
 options(shiny.maxRequestSize=100*1024^2)
 launch_app(r_data_dir_chr = normalizePath("C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format"),
            credentials_tb = data.frame(
-             user = c("1", "orygenNP", "orygenHSR", "OrygenPol","RFWN"),
-             password = c("000", "Melton", "FirstBounce", "Electorate","Framework"),
+             user = c("user_1", "user_2", "user_3", "user_4","user_5"),
+             password = c("password_1", "password_2", "password_3", "password_4","password_5"),
              stringsAsFactors = FALSE))
 

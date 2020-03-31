@@ -389,6 +389,41 @@ make_server_fn <- function(r_data_dir_chr,
                                                                n = Inf) %>% purrr::flatten_chr() %>% sort())
       )
     })
+    output$areaNameControls <- shiny::renderUI({
+      gdist_dbl <- ifelse(input$pa_type_chr=="Predefined boundary",
+                          NA_real_,
+                          ifelse(is.null(input$gdist_dbl),
+                                 NA_real_,
+                                 input$gdist_dbl))
+      ttime_dbl <- ifelse(input$pa_type_chr=="Predefined boundary",
+                          NA_real_,
+                          ifelse(is.null(input$ttime_dbl), NA_real_,input$ttime_dbl))
+      #metric_dbl <- c(gdist_dbl,ttime_dbl) %>% purrr::keep(~!is.na(.x))
+
+      gdist_ttime_chr <- ifelse(input$pa_type_chr=="Predefined boundary",
+                                NA_character_,
+                                ifelse(is.null(input$gdist_ttime_chr), NA_character_,input$gdist_ttime_chr))
+      if(is.null(input$micro_chr_vec)){
+        points_chr <- "" # Replace with numeric count of points for custom coordinates and >5 services
+      }else{
+        points_chr <- input$micro_chr_vec %>% paste0(collapse = ", ") %>% stringi::stri_replace_last_fixed( ',', ' and')
+      }
+      default_chr <- paste0("Area within ",
+                            ifelse(is.na(gdist_ttime_chr),
+                                   "",
+                                   ifelse(gdist_ttime_chr=="Geometric distance",
+                                          paste0(gdist_dbl, " Km "),
+                                          paste0(ttime_dbl, " Minutes Drive "))),
+                            "of ",
+                            points_chr,
+                            ifelse(T,
+                                   paste0(" Headspace Centre",ifelse(length(input$micro_chr_vec)>1,"s","")),
+                                   " Custom Coordinates")) # Replace with condition logic for custom coordinates
+      shiny::conditionalPanel(
+        condition = "input.pa_type_chr != \"Predefined boundary\"",
+        shiny::textInput("area_name_chr", "Name of the custom geometry that you are profiling", value = default_chr)
+      )
+    })
     ## 4.3 CONTENT TEXT
     output$about_chr <- shiny::renderUI({
       if(getTabIndex()==1){
