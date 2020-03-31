@@ -1,4 +1,4 @@
-#' @title make_app_ui
+#' @title make_ui_body_fn
 #' @description FUNCTION_DESCRIPTION
 #' @return OUTPUT_DESCRIPTION
 #' @details DETAILS
@@ -13,13 +13,13 @@
 #'  \code{\link[shinythemes]{shinytheme}}
 #'  \code{\link[shinyjs]{useShinyjs}}
 #'  \code{\link[purrr]{flatten}}
-#' @rdname make_app_ui
+#' @rdname make_ui_body_fn
 #' @export
 #' @importFrom shiny fluidPage headerPanel sidebarPanel p uiOutput mainPanel tabsetPanel tabPanel selectInput actionButton conditionalPanel sliderInput h1 textInput downloadButton
 #' @importFrom shinythemes shinytheme
 #' @importFrom shinyjs useShinyjs
 #' @importFrom purrr flatten_chr
-make_app_ui <- function(){
+make_ui_body_fn <- function(){
   shiny::fluidPage(theme = shinythemes::shinytheme("journal"),
                    tags$head(tags$style(HTML("#tabs li a[data-value = 'ft_type'], #tabs li a[data-value = 'bound_yr'], #tabs li a[data-value = 'ft_value'], #tabs li a[data-value = 'pred_yr'], #tabs li a[data-value = 'stat_type'], #tabs li a[data-value = 'population'], #tabs li a[data-value = 'review'], #tabs li a[data-value = 'make_rpt'] {
                              display: none;
@@ -228,4 +228,28 @@ t = setTimeout(logout, 3600000);  // time is in milliseconds (1000 is 1 second)
 }
 }
 idleTimer();"
+}
+#' @title make_ui_fn
+#' @description FUNCTION_DESCRIPTION
+#' @param secure_lgl PARAM_DESCRIPTION
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @seealso
+#'  \code{\link[shinymanager]{secure-app}}
+#' @rdname make_ui_fn
+#' @export
+#' @importFrom shinymanager secure_app
+make_ui_fn <- function(secure_lgl){
+  if(secure_lgl){
+    shinymanager::secure_app(head_auth = tags$script(make_inactivity_script_chr()),
+                             ui = make_ui_body_fn())
+  }else{
+    make_ui_body_fn()
+  }
 }
