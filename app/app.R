@@ -5,5 +5,6 @@ launch_app(r_data_dir_chr = normalizePath("C:/Users/mahamilton/Desktop/Readyforw
            credentials_tb = data.frame(
              user = c("user_1", "user_2", "user_3", "user_4","user_5"),
              password = c("password_1", "password_2", "password_3", "password_4","password_5"),
-             stringsAsFactors = FALSE))
+             stringsAsFactors = FALSE),
+           shinyio_lgl = F)
 

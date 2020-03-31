@@ -4,12 +4,14 @@
 \alias{launch_app}
 \title{launch_app}
 \usage{
-launch_app(r_data_dir_chr, credentials_tb = NULL)
+launch_app(r_data_dir_chr, credentials_tb = NULL, shinyio_lgl = F)
 }
 \arguments{
 \item{r_data_dir_chr}{PARAM_DESCRIPTION}
 
 \item{credentials_tb}{PARAM_DESCRIPTION, Default: NULL}
+
+\item{shinyio_lgl}{PARAM_DESCRIPTION, Default: F}
 }
 \value{
 OUTPUT_DESCRIPTION
