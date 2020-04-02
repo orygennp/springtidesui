@@ -254,3 +254,131 @@ make_ui_fn <- function(secure_lgl){
     make_ui_body_fn()
   }
 }
+#' @title make_basic_ui_fn
+#' @description FUNCTION_DESCRIPTION
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @seealso
+#'  \code{\link[shiny]{fluidPage}},\code{\link[shiny]{headerPanel}},\code{\link[shiny]{htmlOutput}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{textInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{radioButtons}},\code{\link[shiny]{downloadButton}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{conditionalPanel}}
+#'  \code{\link[shinythemes]{shinytheme}}
+#' @rdname make_basic_ui_body_fn
+#' @export
+#' @importFrom shiny fluidPage headerPanel uiOutput sliderInput textInput p radioButtons downloadButton selectInput conditionalPanel
+#' @importFrom shinythemes shinytheme
+make_basic_ui_body_fn <- function(){
+  shiny::fluidPage(theme = shinythemes::shinytheme("journal"),
+            tags$style(".btn {
+                     background-color: orange;
+                                }"),
+            shiny::headerPanel('Springtides'),
+
+            # App title ----
+            # titlePanel("Tabsets"),
+
+            # Sidebar layout with input and output definitions ----
+            sidebarLayout(
+
+              # Sidebar panel for inputs ----
+              sidebarPanel(
+                shiny::uiOutput("statisticControls"),
+                shiny::uiOutput("disorderControls"),
+                shiny::uiOutput("ageRangeControls"),
+                shiny::uiOutput("when_controls"),
+                shiny::sliderInput("n_its_int", "Number of simulation iterations", 1, 100, 10),
+                shiny::sliderInput("uncertainty_int", "Uncertainty Interval",
+                                   min = 0.01, max = 1, value = c(0.025,0.975), step = 0.005),
+                shiny::textInput("user_name_chr", "Your name / your organisation's name", value = "Anonymous User"),
+                shiny::uiOutput("areaNameControls"),
+                shiny::p("Note: It will take between 5 and 20 minutes to generate your report."),
+                shiny::radioButtons("report_format_chr","Report format:",
+                                    c("PDF" = "PDF",
+                                      "HTML" = "HTML",
+                                      "Word" = "Word"), inline=T),
+                shiny::downloadButton("report", "Generate a report")
+              ),
+
+              # Main panel for displaying outputs ----
+              mainPanel(
+
+                # Output: Tabset w/ plot, summary, and table ----
+                tabsetPanel(type = "tabs",
+                            # tabPanel("Plot", plotOutput("plot")),
+                            # tabPanel("Summary", verbatimTextOutput("summary")),
+                            tabPanel("Area to profile",
+                                     shiny::selectInput("pa_type_chr", h3("Type of geometry"),
+                                                        choices = list("PHN Boundary" = "Predefined boundary",
+                                                                       "Poximity to Headspace Centres" = "HSS"
+                                                                       # ,
+                                                                       # "Base on proximity to custom coordinates" = "Custom"
+                                                        ),
+                                                        selected = "Predefined boundary"),
+                                     shiny::conditionalPanel(
+                                       condition = "input.pa_type_chr == \"Predefined boundary\"",
+                                       shiny::uiOutput("areaControls")
+                                     ),
+                                     shiny::conditionalPanel(
+                                       condition = "input.pa_type_chr == \"HSS\"",
+                                       shiny::uiOutput("headspaceControls"),
+                                       # shiny::selectInput("pa_type_chr", h3("Geometry"),
+                                       #                    choices = list("Select from a menu of existing options" = "Predefined boundary",
+                                       #                                   "Generate your own" = "HSS"
+                                       #                                   # ,
+                                       #                                   # "Base on proximity to custom coordinates" = "Custom"
+                                       #                    ),
+                                       #                    selected = "Predefined boundary"),
+                                       shiny::conditionalPanel(
+                                         condition = "input.pa_type_chr != \"Predefined boundary\"",
+                                         shiny::selectInput("gdist_ttime_chr", h3("Proximity measure"),
+                                                            choices = list("Maximium geometric distance" = "Geometric distance",
+                                                                           "Maximum drive time" = "Travel time"),
+                                                            selected = "Geometric distance")
+                                       ),
+                                       shiny::conditionalPanel(
+                                         condition = "input.pa_type_chr != \"Predefined boundary\" & input.gdist_ttime_chr == \"Geometric distance\"",
+                                         shiny::sliderInput("gdist_dbl", "Geometric distance in Kilometres",
+                                                            min = 10, max = 50, value = 20)
+                                       ),
+                                       shiny::conditionalPanel(
+                                         condition = "input.pa_type_chr != \"Predefined boundary\" & input.gdist_ttime_chr == \"Travel time\"",
+                                         shiny::sliderInput("ttime_dbl", "Drive time in minutes",
+                                                            min = 15, max = 60, value = 20)
+                                       )
+                                     )
+                            )
+
+                )
+
+              )
+            )
+  )
+}
+#' @title make_basic_ui_fn
+#' @description FUNCTION_DESCRIPTION
+#' @param secure_lgl PARAM_DESCRIPTION
+#' @return OUTPUT_DESCRIPTION
+#' @details DETAILS
+#' @examples
+#' \dontrun{
+#' if(interactive()){
+#'  #EXAMPLE1
+#'  }
+#' }
+#' @seealso
+#'  \code{\link[shinymanager]{secure-app}}
+#' @rdname make_basic_ui_fn
+#' @export
+#' @importFrom shinymanager secure_app
+make_basic_ui_fn <- function(secure_lgl){
+  if(secure_lgl){
+    shinymanager::secure_app(head_auth = tags$script(make_inactivity_script_chr()),
+                             ui = make_basic_ui_body_fn())
+  }else{
+    make_basic_ui_body_fn()
+  }
+}
