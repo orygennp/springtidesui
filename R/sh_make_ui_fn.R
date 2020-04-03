@@ -273,89 +273,107 @@ make_ui_fn <- function(secure_lgl){
 #' @importFrom shinythemes shinytheme
 make_basic_ui_body_fn <- function(){
   shiny::fluidPage(theme = shinythemes::shinytheme("journal"),
-            tags$style(".btn {
+                   tags$style(".btn {
                      background-color: orange;
                                 }"),
-            shiny::headerPanel('Springtides'),
+                   shiny::headerPanel('Springtides'),
 
-            # App title ----
-            # titlePanel("Tabsets"),
+                   # App title ----
+                   # titlePanel("Tabsets"),
 
-            # Sidebar layout with input and output definitions ----
-            sidebarLayout(
+                   # Sidebar layout with input and output definitions ----
+                   sidebarLayout(
 
-              # Sidebar panel for inputs ----
-              sidebarPanel(
-                shiny::uiOutput("statisticControls"),
-                shiny::uiOutput("disorderControls"),
-                shiny::uiOutput("ageRangeControls"),
-                shiny::uiOutput("when_controls"),
-                shiny::sliderInput("n_its_int", "Number of simulation iterations", 1, 100, 10),
-                shiny::sliderInput("uncertainty_int", "Uncertainty Interval",
-                                   min = 0.01, max = 1, value = c(0.025,0.975), step = 0.005),
-                shiny::textInput("user_name_chr", "Your name / your organisation's name", value = "Anonymous User"),
-                shiny::uiOutput("areaNameControls"),
-                shiny::p("Note: It will take between 5 and 20 minutes to generate your report."),
-                shiny::radioButtons("report_format_chr","Report format:",
-                                    c("PDF" = "PDF",
-                                      "HTML" = "HTML",
-                                      "Word" = "Word"), inline=T),
-                shiny::downloadButton("report", "Generate a report")
-              ),
+                     # Sidebar panel for inputs ----
+                     sidebarPanel(
+                       # shiny::uiOutput("statisticControls"),
+                       # shiny::uiOutput("disorderControls"),
+                       # shiny::uiOutput("ageRangeControls"),
+                       # shiny::uiOutput("when_controls"),
+                       # shiny::sliderInput("n_its_int", "Number of simulation iterations", 1, 100, 10),
+                       # shiny::sliderInput("uncertainty_int", "Uncertainty Interval",
+                       #                    min = 0.01, max = 1, value = c(0.025,0.975), step = 0.005),
+                       # shiny::textInput("user_name_chr", "Your name / your organisation's name", value = "Anonymous User"),
+                       # shiny::uiOutput("areaNameControls"),
+                       shiny::p("Note: It will take between 5 and 20 minutes to generate your report."),
+                       shiny::radioButtons("report_format_chr","Report format:",
+                                           c("PDF" = "PDF",
+                                             "HTML" = "HTML",
+                                             "Word" = "Word"), inline=T),
+                       shiny::downloadButton("report", "Generate a report")
+                     ),
 
-              # Main panel for displaying outputs ----
-              mainPanel(
+                     # Main panel for displaying outputs ----
+                     mainPanel(
 
-                # Output: Tabset w/ plot, summary, and table ----
-                tabsetPanel(type = "tabs",
-                            # tabPanel("Plot", plotOutput("plot")),
-                            # tabPanel("Summary", verbatimTextOutput("summary")),
-                            tabPanel("Area to profile",
-                                     shiny::selectInput("pa_type_chr", h3("Type of geometry"),
-                                                        choices = list("PHN Boundary" = "Predefined boundary",
-                                                                       "Poximity to Headspace Centres" = "HSS"
-                                                                       # ,
-                                                                       # "Base on proximity to custom coordinates" = "Custom"
-                                                        ),
-                                                        selected = "Predefined boundary"),
-                                     shiny::conditionalPanel(
-                                       condition = "input.pa_type_chr == \"Predefined boundary\"",
-                                       shiny::uiOutput("areaControls")
-                                     ),
-                                     shiny::conditionalPanel(
-                                       condition = "input.pa_type_chr == \"HSS\"",
-                                       shiny::uiOutput("headspaceControls"),
-                                       # shiny::selectInput("pa_type_chr", h3("Geometry"),
-                                       #                    choices = list("Select from a menu of existing options" = "Predefined boundary",
-                                       #                                   "Generate your own" = "HSS"
-                                       #                                   # ,
-                                       #                                   # "Base on proximity to custom coordinates" = "Custom"
-                                       #                    ),
-                                       #                    selected = "Predefined boundary"),
-                                       shiny::conditionalPanel(
-                                         condition = "input.pa_type_chr != \"Predefined boundary\"",
-                                         shiny::selectInput("gdist_ttime_chr", h3("Proximity measure"),
-                                                            choices = list("Maximium geometric distance" = "Geometric distance",
-                                                                           "Maximum drive time" = "Travel time"),
-                                                            selected = "Geometric distance")
-                                       ),
-                                       shiny::conditionalPanel(
-                                         condition = "input.pa_type_chr != \"Predefined boundary\" & input.gdist_ttime_chr == \"Geometric distance\"",
-                                         shiny::sliderInput("gdist_dbl", "Geometric distance in Kilometres",
-                                                            min = 10, max = 50, value = 20)
-                                       ),
-                                       shiny::conditionalPanel(
-                                         condition = "input.pa_type_chr != \"Predefined boundary\" & input.gdist_ttime_chr == \"Travel time\"",
-                                         shiny::sliderInput("ttime_dbl", "Drive time in minutes",
-                                                            min = 15, max = 60, value = 20)
-                                       )
-                                     )
-                            )
+                       # Output: Tabset w/ plot, summary, and table ----
+                       tabsetPanel(type = "tabs",
+                                   # tabPanel("Plot", plotOutput("plot")),
+                                   # tabPanel("Summary", verbatimTextOutput("summary")),
+                                   tabPanel("Area to profile",
+                                            shiny::selectInput("pa_type_chr", h3("Type of geometry"),
+                                                               choices = list("Select from a menu of existing options" = "Predefined boundary",
+                                                                              "Generate your own" = "HSS"
+                                                                              # ,
+                                                                              # "Base on proximity to custom coordinates" = "Custom"
+                                                               ),
+                                                               selected = "Predefined boundary"),
+                                            shiny::conditionalPanel(
+                                              condition = "input.pa_type_chr == \"Predefined boundary\"",
+                                              shiny::uiOutput("predefinedControls")
+                                            ),
+                                            shiny::conditionalPanel(
+                                              condition = "input.pa_type_chr == \"HSS\"",
+                                              shiny::uiOutput("headspaceControls")
+                                            ),
+                                            #shiny::uiOutput("conditionalGeomFt1Nav"),
+                                            shiny::conditionalPanel(
+                                              condition = "input.pa_type_chr == \"Predefined boundary\" & input.confirmWhere2!=0",
+                                              shiny::uiOutput("boundYearControls")#,
+                                              # shiny::actionButton("confirmYear", "Confirm boundary year selection -->>")
+                                            ),
+                                            shiny::conditionalPanel(
+                                              condition = "input.pa_type_chr == \"Predefined boundary\"",
+                                              shiny::uiOutput("areaFilterControls"),
+                                              shiny::uiOutput("areaControls")
+                                            ),
+                                            shiny::conditionalPanel(
+                                              condition = "input.pa_type_chr != \"Predefined boundary\"",
+                                              shiny::selectInput("gdist_ttime_chr", h3("Proximity measure"),
+                                                                 choices = list("Maximium geometric distance" = "Geometric distance",
+                                                                                "Maximum drive time" = "Travel time"),
+                                                                 selected = "Geometric distance")
+                                            ),
+                                            shiny::conditionalPanel(
+                                              condition = "input.pa_type_chr != \"Predefined boundary\" & input.gdist_ttime_chr == \"Geometric distance\"",
+                                              shiny::sliderInput("gdist_dbl", "Geometric distance in Kilometres",
+                                                                 min = 10, max = 50, value = 20)
+                                            ),
+                                            shiny::conditionalPanel(
+                                              condition = "input.pa_type_chr != \"Predefined boundary\" & input.gdist_ttime_chr == \"Travel time\"",
+                                              shiny::sliderInput("ttime_dbl", "Drive time in minutes",
+                                                                 min = 15, max = 60, value = 20)
+                                            ),
+                                            shiny::p(""),
+                                            shiny::actionButton("returnToWhere", "<<-- Go back and change 'Where' settings"),
+                                            shiny::p(""),
+                                            shiny::actionButton("confirmAll", "Confirm these are the settings you wish to use -->>")
+                                   ),
+                                   shiny::tabPanel("About Springtides",
+                                                   value = "about_springtides",
+                                                   shiny::p(),
+                                                   shiny::h1("App and model"),
+                                                   shiny::p("The Springtides App is a simple user interface to a computer simulation model of the epidemiology of mental and substance use disorders in young people, also called Springtides. When using this app you are asked a number of questions about the type of epidemiological profile that you would like. Your answers are then passed to an instance of the simulation model and a report is generated for you to download. That report provides both a summary of the model results and an overview of the data and algorithms that produced those results."),
+                                                   shiny::h1("Modelling framework and development context"),
+                                                   shiny::p("The Springtides app and simulation model were developed by Orygen in the statistical software R using Orygen's readyforwhatsnext open source modelling framework. The source code for both Springtides and readyforwhatsnext is due for public release as R packages later in 2020. Currently, access to these code libraries is by invitation only as testing is currently ongoing. This current version of the Springtides model is supported by an Australian data pack. However, the algorithms that run the model are compatible with data packs from other jurisdictions."),
+                                                   shiny::h1("Reporting bugs and feature requests"),
+                                                   shiny::p("You are currently using a development version of the Springtides App, which means that verification and validation checks are ongoing. Results produced by this app should be interpreted with care and you are encouraged to cross reference findings with other data sources. We'd greatly appreciate you reporting any suspected errors or suggested improvements to the Springtides development team. Email matthew.hamilton@orygen.org.au")
+                                   )
+                       )
 
-                )
+                     )
 
-              )
-            )
+                   )
   )
 }
 #' @title make_basic_ui_fn

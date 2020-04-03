@@ -736,6 +736,92 @@ make_basic_server_fn <- function(r_data_dir_chr,
            envir = environment())
       eval(parse(text = paste0("pa_r4<-",pa_r4_chr)))
       reactive_ls <- shiny::reactiveValues()
+      shiny::observeEvent(input$confirmYear, {
+        reactive_ls$geom_nav_dbl <- 1
+      })
+      shiny::observeEvent(input$confirmWhere2, {
+        if(is.null(reactive_ls$pa_type_chr)){
+          test_lgl <- F
+        }else{
+          test_lgl <- input$pa_type_chr=="HSS"
+        }
+        if(!test_lgl){
+          meso2_type_tb <- pa_r4@lookup_tb@sp_data_pack_lup %>%
+            dplyr::filter(main_feature == "Boundary") %>%
+            dplyr::filter(area_type == input$meso2_type_chr %>% #reactive_ls$meso2_type_chr %>%
+                            ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+                                                  lookup_variable = "long_name",
+                                                  lookup_reference = .,
+                                                  target_variable = "short_name",
+                                                  evaluate = F))
+          meso2_bound_yr_chr_vec <- meso2_type_tb %>%
+            dplyr::pull(area_bound_yr) %>%
+            unique() %>%
+            sort()
+          meso2_uid_tb <- pa_r4@lookup_tb@sp_uid_lup %>%
+            dplyr::filter(spatial_unit == input$meso2_type_chr %>% #reactive_ls$meso2_type_chr %>%
+                            ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+                                                  lookup_variable = "long_name",
+                                                  lookup_reference = .,
+                                                  target_variable = "short_name",
+                                                  evaluate = F))
+          reactive_ls$meso2_choices_ls <- list(meso2_type_tb = meso2_type_tb,
+                                               meso2_bound_yr_chr_vec = meso2_bound_yr_chr_vec,
+                                               meso2_uid_tb = meso2_uid_tb)
+          reactive_ls$geom_nav_dbl <- 2
+        }
+      })
+      shiny::observeEvent(input$confirmYear, {
+        bnd_sf <- readRDS(reactive_ls$meso2_choices_ls$meso2_type_tb %>%
+                            dplyr::filter(area_bound_yr == input$meso2_bound_yr) %>%
+                            dplyr::pull(source_reference) %>%
+                            paste0(r_data_dir_chr,
+                                   "/",
+                                   .,".rds"
+                            )) %>%
+          springtides::filter_if_var_exists(var_chr = "STE_NAME16",
+                                            var_val_xxx = "Other Territories",
+                                            cond_chr = "!=") %>%
+          purrr::reduce(c("2899","6798","6799","7151"),
+                        .init = .,
+                        ~ .x %>% springtides::filter_if_var_exists(var_chr = "POA_NAME",
+                                                                   var_val_xxx = .y,
+                                                                   cond_chr = "!=")) %>%
+          purrr::reduce(c("2899","6798","6799","7151"),
+                        .init = .,
+                        ~ .x %>% springtides::filter_if_var_exists(var_chr = "POA_NAME16",
+                                                                   var_val_xxx = .y,
+                                                                   cond_chr = "!="))
+
+        reactive_ls$meso2_chr_choices_vec <- bnd_sf  %>%
+          dplyr::pull(!!rlang::sym(reactive_ls$meso2_choices_ls$meso2_uid_tb %>%
+                                     dplyr::filter(year == input$meso2_bound_yr) %>%
+                                     dplyr::pull(var_name))) %>%
+          sort()
+        if(ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+                                 lookup_variable = "long_name",
+                                 lookup_reference = input$meso2_type_chr,
+                                 target_variable = "short_name",
+                                 evaluate = F) %in% (pa_r4@lookup_tb@sp_resolution_lup %>%
+                                                     dplyr::filter(area_count >800) %>%
+                                                     dplyr::pull(area_type) %>%
+                                                     unique())){
+          reactive_ls$meso2_filter_choices_chr_vec <- reactive_ls$meso2_chr_choices_vec %>%
+            stringr::str_sub(start=1,end=2) %>%
+            unique() %>%
+            sort()
+        }else{
+          reactive_ls$meso2_filter_choices_chr_vec <- NULL
+        }
+        reactive_ls$geom_nav_dbl <- 3
+      })
+      shiny::observeEvent(input$returnToWhere, {
+        reactive_ls$geom_nav_dbl <- 1
+        reactive_ls$meso2_choices_ls <- NULL
+        reactive_ls$meso2_bound_yr <- NULL
+        reactive_ls$meso2_chr_choices_vec <- NULL
+        reactive_ls$meso2_first_chr <- NULL
+      })
       shiny::observe({
         if(is.null(input$stat_chr)){
           reactive_ls$disorder_choices_vec <- NULL
@@ -749,7 +835,6 @@ make_basic_server_fn <- function(r_data_dir_chr,
             sort()
         }
       })
-
       output$ageRangeControls <- shiny::renderUI({
         # if(is.null(input$disorder_chr))
         #   return()
@@ -764,30 +849,26 @@ make_basic_server_fn <- function(r_data_dir_chr,
                              min = min(age_vec), max = max(age_vec), value = age_vec))
       })
       output$areaControls <- shiny::renderUI({
-        if(input$pa_type_chr !="Predefined boundary" #| is.null(reactive_ls$meso2_chr_choices_vec)
-        )
+        if(input$pa_type_chr !="Predefined boundary" | is.null(reactive_ls$meso2_chr_choices_vec) |ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<3))
           return()
-        meso2_uid_tb <- pa_r4@lookup_tb@sp_uid_lup %>%
-          dplyr::filter(spatial_unit == "PHN")
-        meso2_type_tb <- pa_r4@lookup_tb@sp_data_pack_lup %>%
-          dplyr::filter(main_feature == "Boundary") %>%
-          dplyr::filter(area_type == "PHN")
-        bnd_sf <- readRDS(meso2_type_tb %>%
-                            dplyr::filter(area_bound_yr == 2017) %>%
-                            dplyr::pull(source_reference) %>%
-                            paste0(r_data_dir_chr,
-                                   "/",
-                                   .,".rds"
-                            ))
-
-        meso2_chr_choices_vec <- bnd_sf  %>%
-          dplyr::pull(!!rlang::sym(meso2_uid_tb %>%
-                                     dplyr::filter(year == 2017) %>%
-                                     dplyr::pull(var_name))) %>%
-          sort()
         shiny::tagList(
           shiny::selectInput("meso2_chr", h3("Feature"),
-                             choices = meso2_chr_choices_vec)
+                             choices = reactive_ls$meso2_chr_choices_vec %>%
+                               springtides::subset_vec_if_var_exists(var_val_chr = input$meso2_first_chr,
+                                                                     fn = startsWith)
+          )
+
+        )
+      })
+      output$areaFilterControls <- shiny::renderUI({
+        if(input$pa_type_chr !="Predefined boundary"| is.null(reactive_ls$meso2_filter_choices_chr_vec) | ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<3)
+           )
+          return()
+        shiny::tagList(
+          shiny::selectInput("meso2_first_chr", h3(ifelse(input$meso2_type_chr == "Postal Area",
+                                                          paste0("First two digits of ",input$meso2_type_chr),
+                                                          paste0("First two letters of ",input$meso2_type_chr))),
+                             choices = reactive_ls$meso2_filter_choices_chr_vec)
 
         )
       })
@@ -797,13 +878,12 @@ make_basic_server_fn <- function(r_data_dir_chr,
                             ifelse(is.null(input$gdist_dbl),
                                    NA_real_,
                                    input$gdist_dbl))
-        # ttime_dbl <- ifelse(input$pa_type_chr=="Predefined boundary",
-        #                     NA_real_,
-        #                     ifelse(is.null(input$ttime_dbl), NA_real_,input$ttime_dbl))
-
+        ttime_dbl <- ifelse(input$pa_type_chr=="Predefined boundary",
+                            NA_real_,
+                            ifelse(is.null(input$ttime_dbl), NA_real_,input$ttime_dbl))
         gdist_ttime_chr <- ifelse(input$pa_type_chr=="Predefined boundary",
                                   NA_character_,
-                                  "Geometric distance"#ifelse(is.null(input$gdist_ttime_chr), NA_character_,input$gdist_ttime_chr)
+                                  ifelse(is.null(input$gdist_ttime_chr), NA_character_,input$gdist_ttime_chr)
         )
         if(is.null(input$micro_chr_vec)){
           points_chr <- "" # Replace with numeric count of points for custom coordinates and >5 services
@@ -826,6 +906,34 @@ make_basic_server_fn <- function(r_data_dir_chr,
           shiny::textInput("area_name_chr", "Name of the custom geometry that you are profiling", value = default_chr)
         )
       })
+      output$boundYearControls <- shiny::renderUI({
+        if(is.null(reactive_ls$meso2_choices_ls)|ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<2))
+          return()
+        if(ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<3)){
+        shiny::tagList(
+
+            shiny::selectInput("meso2_bound_yr", h3("Boundary year"),
+                               choices = reactive_ls$meso2_choices_ls$meso2_bound_yr_chr_vec),
+            shiny::actionButton("confirmYear", "Confirm boundary year selection -->>")
+
+        )
+        }else{
+          shiny::tagList(
+          shiny::p(input$meso2_bound_yr)
+          )
+        }
+      })
+      # output$conditionalGeomFt1Nav <- shiny::renderUI({
+      #   if(input$pa_type_chr=="HSS" & length(input$micro_chr_vec) == 0)
+      #     return()
+      #   shiny::tagList(
+      #     shiny::actionButton("confirmWhere2", paste0("Confirm selection of ",
+      #                                                 ifelse(input$pa_type_chr=="HSS",
+      #                                                        "headspace centres",
+      #                                                        "spatial unit"),
+      #                                                 "  -->>"))
+      #   )
+      # })
       output$disorderControls <- shiny::renderUI({
         shiny::tagList(shiny::selectInput("disorder_chr",
                                           shiny::h3("Disorder or behaviour"),
@@ -840,6 +948,38 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                       dplyr::pull(service_name) %>% unique() %>% sort(),
                                     inline = T)
         )
+      })
+      output$predefinedControls <- shiny::renderUI({
+        if(input$pa_type_chr !="Predefined boundary")
+          return()
+        if(ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<2)){
+          shiny::tagList(
+            shiny::selectInput("meso2_type_chr",
+                               shiny::h3("Spatial unit"),
+                               choices = pa_r4@lookup_tb@sp_data_pack_lup %>%
+                                 dplyr::filter(main_feature == "Boundary") %>%
+                                 dplyr::filter(!area_type %in% c("AUS","HSS","SA1","SA2","XX1")) %>%
+                                 dplyr::pull(area_type) %>%
+                                 unique() %>%
+                                 purrr::map_chr(~ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+                                                                       lookup_variable = "short_name",
+                                                                       lookup_reference = .x,
+                                                                       target_variable = "long_name",
+                                                                       evaluate = F)) %>%
+                                 sort()),
+            shiny::actionButton("confirmWhere2", paste0("Confirm selection of ",
+                                                        ifelse(input$pa_type_chr=="HSS",
+                                                               "headspace centres",
+                                                               "spatial unit"),
+                                                        "  -->>"))
+          )
+        }else{
+          shiny::tagList(
+            shiny::p(input$meso2_type_chr)
+
+          )
+        }
+
       })
       output$report <- shiny::downloadHandler(
         filename = function() {
