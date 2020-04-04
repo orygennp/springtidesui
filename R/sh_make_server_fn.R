@@ -823,6 +823,25 @@ make_basic_server_fn <- function(r_data_dir_chr,
         reactive_ls$meso2_first_chr <- NULL
       })
       shiny::observe({
+        if(is.null(input$disorder_chr)|is.null(input$stat_chr)){
+          reactive_ls$age_inputs_ls <- NULL
+
+        }else{
+          reactive_ls$age_inputs_ls <- list(disorder_chr = input$disorder_chr,
+                                            stat_chr = input$stat_chr)
+        }
+
+        # if(is.null(input$disorder_chr)|is.null(input$stat_chr)){
+        #   reactive_ls$age_range_dbl_vec <- NULL
+        # }else{
+        #   reactive_ls$age_range_dbl_vec <- springtides::get_age_range_choices_int_vec(lup_r4 = pa_r4@lookup_tb,
+        #                                                                               path_to_data_chr = r_data_dir_chr,
+        #                                                                               stat_chr = input$stat_chr,
+        #                                                                               disorder_chr = input$disorder_chr %>%
+        #                                                                                 stringr::str_replace_all(" ","_"))
+        # }
+      })
+      shiny::observe({
         if(is.null(input$stat_chr)){
           reactive_ls$disorder_choices_vec <- NULL
         }else{
@@ -836,17 +855,28 @@ make_basic_server_fn <- function(r_data_dir_chr,
         }
       })
       output$ageRangeControls <- shiny::renderUI({
-        # if(is.null(input$disorder_chr))
-        #   return()
+        if(is.null(reactive_ls$age_inputs_ls$disorder_chr)|is.null(reactive_ls$age_inputs_ls$stat_chr))
+          return()
+        #age_vec <- c(18,19)
+
         age_vec <- springtides::get_age_range_choices_int_vec(lup_r4 = pa_r4@lookup_tb,
                                                               path_to_data_chr = r_data_dir_chr,
-                                                              stat_chr = input$stat_chr,
-                                                              disorder_chr = input$disorder_chr %>%
+                                                              stat_chr = reactive_ls$age_inputs_ls$stat_chr,#input$stat_chr,#,
+                                                              disorder_chr = reactive_ls$age_inputs_ls$disorder_chr %>% #
                                                                 stringr::str_replace_all(" ","_"))
+        # if(is.null(reactive_ls$age_range_dbl_vec))
+        #   return()
         shiny::tagList(
-          shiny::sliderInput("age_range_int_vec",
-                             shiny::h3("Age range"),
-                             min = min(age_vec), max = max(age_vec), value = age_vec))
+          #shiny::conditionalPanel(
+          #  condition = "input.confirmDisorder != 0",
+            shiny::sliderInput("age_range_int_vec",
+                               shiny::p("Age range"),
+                               min = min(age_vec),
+                               max = max(age_vec),
+                               value = age_vec
+            )
+          #)
+        )
       })
       output$areaControls <- shiny::renderUI({
         if(input$pa_type_chr !="Predefined boundary" | is.null(reactive_ls$meso2_chr_choices_vec) |ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<3))
@@ -872,7 +902,35 @@ make_basic_server_fn <- function(r_data_dir_chr,
 
         )
       })
-      output$areaNameControls <- shiny::renderUI({
+      output$boundYearControls <- shiny::renderUI({
+        if(is.null(reactive_ls$meso2_choices_ls)|ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<2))
+          return()
+        if(ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<3)){
+        shiny::tagList(
+
+            shiny::selectInput("meso2_bound_yr", shiny::h3("Boundary year"),
+                               choices = reactive_ls$meso2_choices_ls$meso2_bound_yr_chr_vec),
+            shiny::actionButton("confirmYear", "Confirm boundary year selection -->>")
+
+        )
+        }else{
+          shiny::tagList(
+          shiny::h3("Boundary year"),
+          shiny::p(input$meso2_bound_yr)
+          )
+        }
+      })
+      output$headspaceControls <- shiny::renderUI({
+        if(input$pa_type_chr !="HSS")
+          return()
+        shiny::tagList(
+          shiny::checkboxGroupInput("micro_chr_vec", "Headspace Centres",
+                                    choices = pa_r4@lookup_tb@sp_site_coord_lup %>%
+                                      dplyr::pull(service_name) %>% unique() %>% sort(),
+                                    inline = T)
+        )
+      })
+      output$outputControls <- shiny::renderUI({
         gdist_dbl <- ifelse(input$pa_type_chr=="Predefined boundary",
                             NA_real_,
                             ifelse(is.null(input$gdist_dbl),
@@ -901,54 +959,32 @@ make_basic_server_fn <- function(r_data_dir_chr,
                               ifelse(T,
                                      paste0(" Headspace Centre",ifelse(length(input$micro_chr_vec)>1,"s","")),
                                      " Custom Coordinates")) # Replace with condition logic for custom coordinates
-        shiny::conditionalPanel(
-          condition = "input.pa_type_chr != \"Predefined boundary\"",
-          shiny::textInput("area_name_chr", "Name of the custom geometry that you are profiling", value = default_chr)
-        )
-      })
-      output$boundYearControls <- shiny::renderUI({
-        if(is.null(reactive_ls$meso2_choices_ls)|ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<2))
-          return()
-        if(ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<3)){
-        shiny::tagList(
-
-            shiny::selectInput("meso2_bound_yr", shiny::h3("Boundary year"),
-                               choices = reactive_ls$meso2_choices_ls$meso2_bound_yr_chr_vec),
-            shiny::actionButton("confirmYear", "Confirm boundary year selection -->>")
-
-        )
+        if((input$pa_type_chr == "Predefined boundary" & ifelse(is.null(reactive_ls$geom_nav_dbl),F,reactive_ls$geom_nav_dbl >= 3)) |
+           (input$pa_type_chr != "Predefined boundary" & ifelse(is.null(input$micro_chr_vec),F,length(input$micro_chr_vec) > 0))){
+          shiny::tagList(
+            shiny::h3("Generate a custom report"),
+            shiny::wellPanel(style = "background:gold",
+              shiny::textInput("user_name_chr", "Your name / your organisation's name", value = "Anonymous User"),
+              shiny::conditionalPanel(
+                condition = "input.pa_type_chr != \"Predefined boundary\"",
+                shiny::textInput("area_name_chr", "Name of the custom geometry that you are profiling", value = default_chr)
+              ),
+              shiny::p("Note: It will take between 5 and 20 minutes to generate your report."),
+              shiny::radioButtons("report_format_chr","Report format:",
+                                  c("PDF" = "PDF",
+                                    "HTML" = "HTML",
+                                    "Word" = "Word"), inline=T),
+              shiny::downloadButton("report", "Generate a report")
+            )
+          )
         }else{
           shiny::tagList(
-          shiny::h3("Boundary year"),
-          shiny::p(input$meso2_bound_yr)
+            shiny::h3("Get started"),
+            shiny::wellPanel(
+              shiny::p("Select the What, Who, When and Where that you wish to profile.")
+            )
           )
         }
-      })
-      # output$conditionalGeomFt1Nav <- shiny::renderUI({
-      #   if(input$pa_type_chr=="HSS" & length(input$micro_chr_vec) == 0)
-      #     return()
-      #   shiny::tagList(
-      #     shiny::actionButton("confirmWhere2", paste0("Confirm selection of ",
-      #                                                 ifelse(input$pa_type_chr=="HSS",
-      #                                                        "headspace centres",
-      #                                                        "spatial unit"),
-      #                                                 "  -->>"))
-      #   )
-      # })
-      output$disorderControls <- shiny::renderUI({
-        shiny::tagList(shiny::selectInput("disorder_chr",
-                                          shiny::p(""),
-                                          choices = reactive_ls$disorder_choices_vec))
-      })
-      output$headspaceControls <- shiny::renderUI({
-        if(input$pa_type_chr !="HSS")
-          return()
-        shiny::tagList(
-          shiny::checkboxGroupInput("micro_chr_vec", "Headspace Centres",
-                                    choices = pa_r4@lookup_tb@sp_site_coord_lup %>%
-                                      dplyr::pull(service_name) %>% unique() %>% sort(),
-                                    inline = T)
-        )
       })
       output$predefinedControls <- shiny::renderUI({
         if(input$pa_type_chr !="Predefined boundary")
@@ -983,6 +1019,29 @@ make_basic_server_fn <- function(r_data_dir_chr,
         }
 
       })
+      output$proximityControls <- shiny::renderUI({
+        if(input$pa_type_chr=="HSS" & length(input$micro_chr_vec) == 0)
+          return()
+        shiny::tagList(
+          shiny::conditionalPanel(
+            condition = "input.pa_type_chr != \"Predefined boundary\"",
+            shiny::selectInput("gdist_ttime_chr", h3("Proximity measure"),
+                               choices = list("Maximium geometric distance" = "Geometric distance",
+                                              "Maximum drive time" = "Travel time"),
+                               selected = "Geometric distance")
+          ),
+          shiny::conditionalPanel(
+            condition = "input.pa_type_chr != \"Predefined boundary\" & input.gdist_ttime_chr == \"Geometric distance\"",
+            shiny::sliderInput("gdist_dbl", "Geometric distance in Kilometres",
+                               min = 10, max = 50, value = 20)
+          ),
+          shiny::conditionalPanel(
+            condition = "input.pa_type_chr != \"Predefined boundary\" & input.gdist_ttime_chr == \"Travel time\"",
+            shiny::sliderInput("ttime_dbl", "Drive time in minutes",
+                               min = 15, max = 60, value = 20)
+          )
+        )
+      })
       output$report <- shiny::downloadHandler(
         filename = function() {
           paste('Springtides_Report', sep = '.', switch(
@@ -994,12 +1053,12 @@ make_basic_server_fn <- function(r_data_dir_chr,
             path_to_template_chr <- system.file("report.Rmd", package = "springtidesui")#"report.Rmd"#
             temp_dir_chr <- tempdir()
             file.copy(path_to_template_chr, paste0(temp_dir_chr,'/report.Rmd'), overwrite = TRUE)
-            if(input$pa_type_chr!="Predefined boundary"){
+            if(is.null(input$meso2_type_chr)){
               meso2_type_chr <- NA_character_
             }else{
               meso2_type_chr <- ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
                                                       lookup_variable = "long_name",
-                                                      lookup_reference = "Primary Health Network",
+                                                      lookup_reference = input$meso2_type_chr,
                                                       target_variable = "short_name",
                                                       evaluate = F)
             }
@@ -1088,22 +1147,35 @@ make_basic_server_fn <- function(r_data_dir_chr,
           if(ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<3)){
             return()
           }else{
-            shiny::actionButton("returnToWhere", "Start again")
+            shiny::actionButton("returnToWhere", "Change geometry selections")
           }
         )
       })
       output$statisticControls <- shiny::renderUI({
         shiny::tagList(
-          shiny::selectInput("stat_chr", p(""),
+          shiny::selectInput("stat_chr", p("Statistic"),
                              choices = springtides::get_input_ls(fn = springtides::make_stat_choices_ls,
                                                                  args = NULL,
                                                                  n = Inf) %>% purrr::flatten_chr() %>% sort())
         )
       })
-      output$when_controls <- shiny::renderUI({
-        if(input$pa_type_chr=="HSS" & length(input$micro_chr_vec) == 0)
-          return()
+      output$whatControls <- shiny::renderUI({
         shiny::tagList(
+          shiny::wellPanel(
+            #shiny::h3("What"),
+            shiny::uiOutput("statisticControls"),
+            shiny::sliderInput("uncertainty_int", "Uncertainty Interval",
+                               min = 0.01, max = 1, value = c(0.025,0.975), step = 0.005),
+            shiny::sliderInput("n_its_int", "Number of simulation iterations", 1, 100, 10)
+          )
+        )
+      })
+      output$whenControls <- shiny::renderUI({
+        # if(input$pa_type_chr=="HSS" & length(input$micro_chr_vec) == 0)
+        #   return()
+        shiny::tagList(
+          shiny::wellPanel(
+          #shiny::h3("When"),
           shiny::dateRangeInput('dateRange',
                                 label = 'Start and end dates (yyyy-mm-dd)',
                                 start = Sys.Date(),
@@ -1112,9 +1184,18 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                 max = pa_r4@temporal_max
           )
         )
+        )
       })
-
-
+      output$whoControls <- shiny::renderUI({
+        shiny::tagList(
+          shiny::wellPanel(
+            shiny::selectInput("disorder_chr",
+                               shiny::p("Disorder or behaviour"),
+                               choices = reactive_ls$disorder_choices_vec),
+            shiny::uiOutput("ageRangeControls")
+          )
+        )
+      })
     if(!is.null(credentials_tb)){
       output$res_auth <- shiny::renderPrint({
         shiny::reactiveValuesToList(result_auth)

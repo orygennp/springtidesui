@@ -286,25 +286,26 @@ make_basic_ui_body_fn <- function(){
 
                      # Sidebar panel for inputs ----
                      sidebarPanel(
+                       shiny::uiOutput("outputControls"),
                        shiny::h3("What"),
-                       shiny::uiOutput("statisticControls"),
-                       shiny::sliderInput("uncertainty_int", "Uncertainty Interval",
-                                          min = 0.01, max = 1, value = c(0.025,0.975), step = 0.005),
+                       shiny::uiOutput("whatControls"),
                        shiny::h3("Who"),
-                       shiny::uiOutput("disorderControls"),
-                       #, shiny::uiOutput("ageRangeControls")
+                       shiny::uiOutput("whoControls"),
+                       # shiny::actionButton("confirm_disorder"),
+                       #,
                        shiny::h3("When"),
-                       shiny::uiOutput("when_controls"),
-                       shiny::h3("Output"),
-                       shiny::sliderInput("n_its_int", "Number of simulation iterations", 1, 100, 10),
-                       shiny::textInput("user_name_chr", "Your name / your organisation's name", value = "Anonymous User"),
-                       shiny::uiOutput("areaNameControls"),
-                       shiny::p("Note: It will take between 5 and 20 minutes to generate your report."),
-                       shiny::radioButtons("report_format_chr","Report format:",
-                                           c("PDF" = "PDF",
-                                             "HTML" = "HTML",
-                                             "Word" = "Word"), inline=T),
-                       shiny::downloadButton("report", "Generate a report")
+                       shiny::uiOutput("whenControls")
+
+                       # shiny::h3("Output"),
+                       # shiny::sliderInput("n_its_int", "Number of simulation iterations", 1, 100, 10),
+                       # shiny::textInput("user_name_chr", "Your name / your organisation's name", value = "Anonymous User"),
+                       # shiny::uiOutput("areaNameControls"),
+                       # shiny::p("Note: It will take between 5 and 20 minutes to generate your report."),
+                       # shiny::radioButtons("report_format_chr","Report format:",
+                       #                     c("PDF" = "PDF",
+                       #                       "HTML" = "HTML",
+                       #                       "Word" = "Word"), inline=T),
+                       # shiny::downloadButton("report", "Generate a report")
                      ),
 
                      # Main panel for displaying outputs ----
@@ -341,23 +342,7 @@ make_basic_ui_body_fn <- function(){
                                               shiny::uiOutput("areaFilterControls"),
                                               shiny::uiOutput("areaControls")
                                             ),
-                                            shiny::conditionalPanel(
-                                              condition = "input.pa_type_chr != \"Predefined boundary\"",
-                                              shiny::selectInput("gdist_ttime_chr", h3("Proximity measure"),
-                                                                 choices = list("Maximium geometric distance" = "Geometric distance",
-                                                                                "Maximum drive time" = "Travel time"),
-                                                                 selected = "Geometric distance")
-                                            ),
-                                            shiny::conditionalPanel(
-                                              condition = "input.pa_type_chr != \"Predefined boundary\" & input.gdist_ttime_chr == \"Geometric distance\"",
-                                              shiny::sliderInput("gdist_dbl", "Geometric distance in Kilometres",
-                                                                 min = 10, max = 50, value = 20)
-                                            ),
-                                            shiny::conditionalPanel(
-                                              condition = "input.pa_type_chr != \"Predefined boundary\" & input.gdist_ttime_chr == \"Travel time\"",
-                                              shiny::sliderInput("ttime_dbl", "Drive time in minutes",
-                                                                 min = 15, max = 60, value = 20)
-                                            ),
+                                            shiny::uiOutput("proximityControls"),
                                             shiny::p(""),
                                             shiny::uiOutput("startAgain")#,
                                             #shiny::actionButton("returnToWhere", "<<-- Go back and change 'Where' settings"),
