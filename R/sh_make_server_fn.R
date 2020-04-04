@@ -912,13 +912,14 @@ make_basic_server_fn <- function(r_data_dir_chr,
         if(ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<3)){
         shiny::tagList(
 
-            shiny::selectInput("meso2_bound_yr", h3("Boundary year"),
+            shiny::selectInput("meso2_bound_yr", shiny::h3("Boundary year"),
                                choices = reactive_ls$meso2_choices_ls$meso2_bound_yr_chr_vec),
             shiny::actionButton("confirmYear", "Confirm boundary year selection -->>")
 
         )
         }else{
           shiny::tagList(
+          shiny::h3("Boundary year"),
           shiny::p(input$meso2_bound_yr)
           )
         }
@@ -936,7 +937,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
       # })
       output$disorderControls <- shiny::renderUI({
         shiny::tagList(shiny::selectInput("disorder_chr",
-                                          shiny::h3("Disorder or behaviour"),
+                                          shiny::p(""),
                                           choices = reactive_ls$disorder_choices_vec))
       })
       output$headspaceControls <- shiny::renderUI({
@@ -975,6 +976,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
           )
         }else{
           shiny::tagList(
+            shiny::h3("Spatial unit"),
             shiny::p(input$meso2_type_chr)
 
           )
@@ -1081,9 +1083,18 @@ make_basic_server_fn <- function(r_data_dir_chr,
           })
         }
       )
+      output$startAgain <- shiny::renderUI({
+        shiny::tagList(
+          if(ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<3)){
+            return()
+          }else{
+            shiny::actionButton("returnToWhere", "Start again")
+          }
+        )
+      })
       output$statisticControls <- shiny::renderUI({
         shiny::tagList(
-          shiny::selectInput("stat_chr", h3("Statistic"),
+          shiny::selectInput("stat_chr", p(""),
                              choices = springtides::get_input_ls(fn = springtides::make_stat_choices_ls,
                                                                  args = NULL,
                                                                  n = Inf) %>% purrr::flatten_chr() %>% sort())
