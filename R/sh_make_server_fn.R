@@ -700,29 +700,29 @@ make_server_fn <- function(r_data_dir_chr,
 #' }
 #' @seealso
 #'  \code{\link[shinymanager]{secure-app}},\code{\link[shinymanager]{check_credentials}}
-#'  \code{\link[shiny]{reactiveValues}},\code{\link[shiny]{observe}},\code{\link[shiny]{renderUI}},\code{\link[shiny]{tag}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{conditionalPanel}},\code{\link[shiny]{textInput}},\code{\link[shiny]{checkboxGroupInput}},\code{\link[shiny]{downloadHandler}},\code{\link[shiny]{dateRangeInput}},\code{\link[shiny]{renderPrint}},\code{\link[shiny]{reactiveValuesToList}}
-#'  \code{\link[springtides]{get_input_vec}},\code{\link[springtides]{get_disorder_choices_chr_vec}},\code{\link[springtides]{get_age_range_choices_int_vec}},\code{\link[springtides]{make_area_name_chr}},\code{\link[springtides]{tf_stat_chr}},\code{\link[springtides]{get_input_ls}},\code{\link[springtides]{make_stat_choices_ls}}
-#'  \code{\link[stringr]{str_replace}}
+#'  \code{\link[shiny]{reactiveValues}},\code{\link[shiny]{observeEvent}},\code{\link[shiny]{renderUI}},\code{\link[shiny]{tag}},\code{\link[shiny]{conditionalPanel}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{actionButton}},\code{\link[shiny]{checkboxGroupInput}},\code{\link[shiny]{wellPanel}},\code{\link[shiny]{textInput}},\code{\link[shiny]{radioButtons}},\code{\link[shiny]{downloadButton}},\code{\link[shiny]{downloadHandler}},\code{\link[shiny]{HTML}},\code{\link[shiny]{htmlOutput}},\code{\link[shiny]{dateRangeInput}},\code{\link[shiny]{renderPrint}},\code{\link[shiny]{reactiveValuesToList}}
 #'  \code{\link[dplyr]{filter}},\code{\link[dplyr]{pull}}
-#'  \code{\link[rlang]{sym}}
-#'  \code{\link[stringi]{stri_replace_all}}
 #'  \code{\link[ready4utils]{data_get}}
+#'  \code{\link[springtides]{filter_if_var_exists}},\code{\link[springtides]{get_input_vec}},\code{\link[springtides]{get_disorder_choices_chr_vec}},\code{\link[springtides]{get_age_range_choices_int_vec}},\code{\link[springtides]{subset_vec_if_var_exists}},\code{\link[springtides]{make_area_name_chr}},\code{\link[springtides]{tf_stat_chr}},\code{\link[springtides]{make_output_params_ls}},\code{\link[springtides]{get_input_ls}},\code{\link[springtides]{make_stat_choices_ls}}
+#'  \code{\link[purrr]{reduce}},\code{\link[purrr]{map}},\code{\link[purrr]{flatten}}
+#'  \code{\link[rlang]{sym}}
+#'  \code{\link[stringr]{str_sub}},\code{\link[stringr]{str_replace}}
+#'  \code{\link[stringi]{stri_replace_all}}
 #'  \code{\link[lubridate]{as_date}},\code{\link[lubridate]{period}}
 #'  \code{\link[rmarkdown]{render}},\code{\link[rmarkdown]{pdf_document}},\code{\link[rmarkdown]{html_document}},\code{\link[rmarkdown]{word_document}}
-#'  \code{\link[purrr]{flatten}}
 #' @rdname make_basic_server_fn
 #' @export
 #' @importFrom shinymanager secure_server check_credentials
-#' @importFrom shiny reactiveValues observe renderUI tagList sliderInput h3 selectInput conditionalPanel textInput checkboxGroupInput downloadHandler dateRangeInput renderPrint reactiveValuesToList
-#' @importFrom springtides get_input_vec get_disorder_choices_chr_vec get_age_range_choices_int_vec make_area_name_chr tf_stat_chr get_input_ls make_stat_choices_ls
-#' @importFrom stringr str_replace_all
+#' @importFrom shiny reactiveValues observeEvent renderUI tagList conditionalPanel sliderInput p selectInput h3 actionButton checkboxGroupInput wellPanel textInput radioButtons downloadButton downloadHandler HTML uiOutput dateRangeInput renderPrint reactiveValuesToList
 #' @importFrom dplyr filter pull
-#' @importFrom rlang sym
-#' @importFrom stringi stri_replace_last_fixed
 #' @importFrom ready4utils data_get
+#' @importFrom springtides filter_if_var_exists get_input_vec get_disorder_choices_chr_vec get_age_range_choices_int_vec subset_vec_if_var_exists make_area_name_chr tf_stat_chr make_output_params_ls get_input_ls make_stat_choices_ls
+#' @importFrom purrr reduce map_chr flatten_chr
+#' @importFrom rlang sym
+#' @importFrom stringr str_sub str_replace_all
+#' @importFrom stringi stri_replace_last_fixed
 #' @importFrom lubridate as_datetime years
 #' @importFrom rmarkdown render pdf_document html_document word_document
-#' @importFrom purrr flatten_chr
 make_basic_server_fn <- function(r_data_dir_chr,
                            credentials_tb = NULL){
   function(input, output, session){
@@ -824,15 +824,15 @@ make_basic_server_fn <- function(r_data_dir_chr,
       })
       shiny::observeEvent(input$confirmDisorder, {
         reactive_ls$disorderOnDbl <- 1
-        reactive_ls$reportLgl <- T
+        reactive_ls$reportDbl <- ifelse(is.null(reactive_ls$reportDbl),1,min(reactive_ls$reportDbl+1,3))
       })
       shiny::observeEvent(input$changeDisorder, {
         reactive_ls$disorderOnDbl <- 0
-        reactive_ls$reportLgl <- F
+        reactive_ls$reportDbl <- ifelse(is.null(reactive_ls$reportDbl),0,max(reactive_ls$reportDbl-1,0))
       })
       shiny::observeEvent(input$confirmStatistic, {
         reactive_ls$statisticOnDbl <- 1
-        reactive_ls$reportLgl <- T
+        reactive_ls$reportDbl <- ifelse(is.null(reactive_ls$reportDbl),1,min(reactive_ls$reportDbl+1,3))
         reactive_ls$disorder_choices_vec <- springtides::get_input_vec(fn = springtides::get_disorder_choices_chr_vec,
                                                                        args = list(lup_r4 = pa_r4@lookup_tb,
                                                                                    path_to_data_chr = r_data_dir_chr,
@@ -843,60 +843,18 @@ make_basic_server_fn <- function(r_data_dir_chr,
       })
       shiny::observeEvent(input$changeStatistic, {
         reactive_ls$statisticOnDbl <- 0
-        reactive_ls$reportLgl <- F
+        reactive_ls$reportDbl <- ifelse(is.null(reactive_ls$reportDbl),0,max(reactive_ls$reportDbl-1,0))
         reactive_ls$disorder_choices_vec <- NULL
       })
-      # shiny::observe({
-      #   if(is.null(input$disorder_chr)|is.null(input$stat_chr)){
-      #     reactive_ls$age_inputs_ls <- NULL
-      #
-      #   }else{
-      #     reactive_ls$age_inputs_ls <- list(disorder_chr = input$disorder_chr,
-      #                                       stat_chr = input$stat_chr)
-      #   }
-      #
-      #   # if(is.null(input$disorder_chr)|is.null(input$stat_chr)){
-      #   #   reactive_ls$age_range_dbl_vec <- NULL
-      #   # }else{
-      #   #   reactive_ls$age_range_dbl_vec <- springtides::get_age_range_choices_int_vec(lup_r4 = pa_r4@lookup_tb,
-      #   #                                                                               path_to_data_chr = r_data_dir_chr,
-      #   #                                                                               stat_chr = input$stat_chr,
-      #   #                                                                               disorder_chr = input$disorder_chr %>%
-      #   #                                                                                 stringr::str_replace_all(" ","_"))
-      #   # }
-      # })
-      # shiny::observe({
-      #   if(is.null(input$stat_chr)){
-      #     reactive_ls$disorder_choices_vec <- NULL
-      #   }else{
-      #     reactive_ls$disorder_choices_vec <- springtides::get_input_vec(fn = springtides::get_disorder_choices_chr_vec,
-      #                                                                    args = list(lup_r4 = pa_r4@lookup_tb,
-      #                                                                                path_to_data_chr = r_data_dir_chr,
-      #                                                                                stat_chr = input$stat_chr,
-      #                                                                                sex_chr_vec = c("Female","Male")),
-      #                                                                    n = Inf) %>% stringr::str_replace_all("_"," ") %>%
-      #       sort()
-      #   }
-      # })
-      confirmWhenButtonText <- shiny::reactive({
-        shiny::validate(
-          shiny::need(input$dateRange[1] < input$dateRange[2], "End date needs to be later than start date.")
-          # shiny::need(!is.null(input$dateRange[1]), "Start date needs to be a valid date but is currently empty."),
-          # shiny::need(lubridate::is.Date(input$dateRange[1]), "Start date needs to be a valid date."),
-          # shiny::need(!is.null(input$dateRange[2]), "End date needs to be a valid date but is currently empty."),
-          # shiny::need(lubridate::is.Date(input$dateRange[2]), "End date needs to be a valid date.")
-        )
-        "Confirm dates -->>"
+      shiny::observeEvent(input$confirmWhen, {
+        reactive_ls$whenOnDbl <- 1
+        reactive_ls$reportDbl <- ifelse(is.null(reactive_ls$reportDbl),1,min(reactive_ls$reportDbl+1,3))
       })
-      # output$confirm_when_controls <- shiny::renderUI({
-      #   shiny::tagList(
-      #     shiny::actionButton("confirmWhen", confirmWhenButtonText())
-      #   )
-      # })
+      shiny::observeEvent(input$changeWhen, {
+        reactive_ls$whenOnDbl <- 0
+        reactive_ls$reportDbl <- ifelse(is.null(reactive_ls$reportDbl),0,max(reactive_ls$reportDbl-1,0))
+      })
       output$ageRangeControls <- shiny::renderUI({
-        # if(is.null(reactive_ls$age_inputs_ls$disorder_chr)|is.null(reactive_ls$age_inputs_ls$stat_chr))
-        #   return()
-        #age_vec <- c(18,19)
         if(ifelse(is.null(input$confirmDisorder),T,input$confirmDisorder==0)){
           age_vec = c(18,19)
         }else{
@@ -906,8 +864,6 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                                                 disorder_chr = input$disorder_chr %>% #
                                                                   stringr::str_replace_all(" ","_"))
         }
-        # if(is.null(reactive_ls$age_range_dbl_vec))
-        #   return()
         shiny::tagList(
           shiny::conditionalPanel(
            condition = "input.confirmDisorder != 0",
@@ -1001,8 +957,8 @@ make_basic_server_fn <- function(r_data_dir_chr,
                               ifelse(T,
                                      paste0(" Headspace Centre",ifelse(length(input$micro_chr_vec)>1,"s","")),
                                      " Custom Coordinates")) # Replace with condition logic for custom coordinates
-        if((input$pa_type_chr == "Predefined boundary" & ifelse(is.null(reactive_ls$geom_nav_dbl),F,reactive_ls$geom_nav_dbl >= 3) & ifelse(is.null(reactive_ls$reportLgl),F,reactive_ls$reportLgl)) |
-           (input$pa_type_chr != "Predefined boundary" & ifelse(is.null(input$micro_chr_vec),F,length(input$micro_chr_vec) > 0) & ifelse(is.null(reactive_ls$reportLgl),F,reactive_ls$reportLgl))){
+        if((input$pa_type_chr == "Predefined boundary" & ifelse(is.null(reactive_ls$geom_nav_dbl),F,reactive_ls$geom_nav_dbl >= 3) & ifelse(is.null(reactive_ls$reportDbl),F, reactive_ls$reportDbl==3)) |
+           (input$pa_type_chr != "Predefined boundary" & ifelse(is.null(input$micro_chr_vec),F,length(input$micro_chr_vec) > 0) & ifelse(is.null(reactive_ls$reportDbl),F, reactive_ls$reportDbl==3))){
           shiny::tagList(
             shiny::h3("Generate a custom report"),
             shiny::wellPanel(style = "background:gold",
@@ -1023,7 +979,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
           shiny::tagList(
             shiny::h3("Get started"),
             shiny::wellPanel(
-              shiny::p("Select the What, Who, When and Where that you wish to profile. When you have completed your selections you will be presented with option to generate a custom report based on this profile.")
+              shiny::p("Select the What, Who, When and Where that you wish to profile. You will then be given the option to generate a custom report based on this profile.")
             )
           )
         }
@@ -1170,6 +1126,9 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                           params_ls$model_start_date %>% format("%d %B %Y"),
                                           " and ",
                                           params_ls$model_end_date %>% format("%d %B %Y"))
+            output_params_ls <- springtides::make_output_params_ls(input_params_ls = params_ls)
+            saveRDS(output_params_ls, file = paste0(temp_dir_chr,'/output_params_ls.rds'))
+            params_ls$output_params_ls_path_chr <- normalizePath(paste0(temp_dir_chr,'/output_params_ls.rds'))
             out <- rmarkdown::render(paste0(temp_dir_chr,'/report.Rmd'),
                                      switch(input$report_format_chr,
                                             PDF = rmarkdown::pdf_document(),
@@ -1189,7 +1148,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
           if(ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<3)){
             return()
           }else{
-            shiny::actionButton("returnToWhere", "Change geometry selections")
+            shiny::actionButton("returnToWhere", "<<-- Change geometry selections")
           }
         )
       })
@@ -1201,22 +1160,27 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                choices = springtides::get_input_ls(fn = springtides::make_stat_choices_ls,
                                                                    args = NULL,
                                                                    n = Inf) %>% purrr::flatten_chr() %>% sort()),
-            shiny::actionButton("confirmStatistic","Confirm statistic selection")
+            shiny::actionButton("confirmStatistic","Confirm statistic selection -->>")
           )
         }else{
           shiny::tagList(
             shiny::HTML(paste("<b>","Statistic","</b>")),
             shiny::p(input$stat_chr),
-            shiny::actionButton("changeStatistic", "Change statistic selection"),
+            shiny::actionButton("changeStatistic", "<<-- Change statistic selection"),
           )
+        }
+      })
+      output$dateValidation <- shiny::renderUI({
+        if(ifelse(is.null(input$dateRange),F,input$dateRange[1]<input$dateRange[2])){
+          shiny::actionButton("confirmWhen", "Confirm dates selection -->>")
+        }else{
+          shiny::p("A valid date range with the second entry a date later than the first entry is required.")
         }
       })
       output$whatControls <- shiny::renderUI({
         shiny::tagList(
           shiny::wellPanel(
-            #shiny::h3("What"),
             shiny::uiOutput("statisticControls"),
-            #shiny::actionButton("confirmStatistic","Confirm statistic selection"),
             shiny::sliderInput("uncertainty_int", "Uncertainty Interval",
                                min = 0.01, max = 1, value = c(0.025,0.975), step = 0.005),
             shiny::sliderInput("n_its_int", "Number of simulation iterations", 1, 100, 10)
@@ -1224,20 +1188,32 @@ make_basic_server_fn <- function(r_data_dir_chr,
         )
         })
       output$whenControls <- shiny::renderUI({
-        # if(input$pa_type_chr=="HSS" & length(input$micro_chr_vec) == 0)
-        #   return()
-        shiny::tagList(
-          shiny::wellPanel(
-                    shiny::dateRangeInput('dateRange',
-                                label = 'Start and end dates (yyyy-mm-dd)',
-                                start = Sys.Date(),
-                                end = (Sys.Date() + lubridate::years(5)) %>% min(pa_r4@temporal_max),
-                                min = pa_r4@temporal_min,
-                                max = pa_r4@temporal_max
-          )#,
-          #shiny::actionButton("confirmWhen", confirmWhenButtonText())
-        )
-        )
+        if(ifelse(is.null(reactive_ls$whenOnDbl),T,reactive_ls$whenOnDbl==0)){
+          shiny::tagList(
+            shiny::wellPanel(
+              shiny::dateRangeInput('dateRange',
+                                    label = 'Start and end dates (yyyy-mm-dd)',
+                                    start = Sys.Date(),
+                                    end = (Sys.Date() + lubridate::years(5)) %>% min(pa_r4@temporal_max),
+                                    min = pa_r4@temporal_min,
+                                    max = pa_r4@temporal_max
+              ),
+              shiny::uiOutput("dateValidation")
+            )
+          )
+        }else{
+          shiny::tagList(
+            shiny::wellPanel(
+              shiny::HTML(paste("<b>","Start and end date","</b>")),
+              shiny::p(paste0(input$dateRange[1] %>% format("%d %B %Y"),
+                              " to ",
+                              input$dateRange[2] %>% format("%d %B %Y")#,"."
+                              )),
+              shiny::actionButton("changeWhen", "<<-- Change dates selection")
+            )
+          )
+        }
+
       })
       output$whoControls <- shiny::renderUI({
         if(ifelse(is.null(input$confirmDisorder),T,input$confirmDisorder==0)|
@@ -1263,7 +1239,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
             shiny::wellPanel(
               shiny::HTML(paste("<b>","Disorder or behaviour","</b>")),
               shiny::p(input$disorder_chr),
-              shiny::actionButton("changeDisorder", "Change disorder or behaviour selection"),
+              shiny::actionButton("changeDisorder", "<<-- Change disorder selection"),
               shiny::uiOutput("ageRangeControls")
             )
           )

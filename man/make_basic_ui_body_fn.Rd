@@ -23,6 +23,6 @@ if(interactive()){
 }
 }
 \seealso{
-\code{\link[shiny]{fluidPage}},\code{\link[shiny]{headerPanel}},\code{\link[shiny]{htmlOutput}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{textInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{radioButtons}},\code{\link[shiny]{downloadButton}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{conditionalPanel}}
+\code{\link[shiny]{fluidPage}},\code{\link[shiny]{headerPanel}},\code{\link[shiny]{htmlOutput}},\code{\link[shiny]{builder}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{conditionalPanel}},\code{\link[shiny]{tabPanel}}
  \code{\link[shinythemes]{shinytheme}}
 }

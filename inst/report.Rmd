@@ -18,6 +18,7 @@ params:
   model_end_date: !r Sys.Date()
   model_start_date: !r springtides::aus_pa_r4@temporal_min
   n_its_int: !r NA_real_
+  output_params_ls_path_chr: !r NA_character_
   pa_r4_chr: aus_pa_r4
   pa_type_chr: !r NA_character_
   pdf_output_lgl: !r F
@@ -63,7 +64,12 @@ header-includes:
 ```{r echo=F, warning=F, message=F, eval=T}
 library(magrittr)
 library(kableExtra)
-output_params_ls <- springtides::make_output_params_ls(input_params_ls = params)
+if(is.na(params$output_params_ls_path_chr)){
+  output_params_ls <- springtides::make_output_params_ls(input_params_ls = params)
+}else{
+  output_params_ls <- readRDS(params$output_params_ls_path_chr)
+}
+
 ```
 
 Not for citation or public dissemination. 

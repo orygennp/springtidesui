@@ -265,11 +265,11 @@ make_ui_fn <- function(secure_lgl){
 #'  }
 #' }
 #' @seealso
-#'  \code{\link[shiny]{fluidPage}},\code{\link[shiny]{headerPanel}},\code{\link[shiny]{htmlOutput}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{textInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{radioButtons}},\code{\link[shiny]{downloadButton}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{conditionalPanel}}
+#'  \code{\link[shiny]{fluidPage}},\code{\link[shiny]{headerPanel}},\code{\link[shiny]{htmlOutput}},\code{\link[shiny]{builder}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{conditionalPanel}},\code{\link[shiny]{tabPanel}}
 #'  \code{\link[shinythemes]{shinytheme}}
 #' @rdname make_basic_ui_body_fn
 #' @export
-#' @importFrom shiny fluidPage headerPanel uiOutput sliderInput textInput p radioButtons downloadButton selectInput conditionalPanel
+#' @importFrom shiny fluidPage headerPanel uiOutput h3 selectInput conditionalPanel p tabPanel h1 a
 #' @importFrom shinythemes shinytheme
 make_basic_ui_body_fn <- function(){
   shiny::fluidPage(theme = shinythemes::shinytheme("journal"),
@@ -277,44 +277,18 @@ make_basic_ui_body_fn <- function(){
                      background-color: orange;
                                 }"),
                    shiny::headerPanel('Springtides'),
-
-                   # App title ----
-                   # titlePanel("Tabsets"),
-
-                   # Sidebar layout with input and output definitions ----
                    sidebarLayout(
-
-                     # Sidebar panel for inputs ----
                      sidebarPanel(
                        shiny::uiOutput("outputControls"),
                        shiny::h3("What"),
                        shiny::uiOutput("whatControls"),
                        shiny::h3("Who"),
                        shiny::uiOutput("whoControls"),
-                       # shiny::actionButton("confirm_disorder"),
-                       #,
                        shiny::h3("When"),
                        shiny::uiOutput("whenControls")
-
-                       # shiny::h3("Output"),
-                       # shiny::sliderInput("n_its_int", "Number of simulation iterations", 1, 100, 10),
-                       # shiny::textInput("user_name_chr", "Your name / your organisation's name", value = "Anonymous User"),
-                       # shiny::uiOutput("areaNameControls"),
-                       # shiny::p("Note: It will take between 5 and 20 minutes to generate your report."),
-                       # shiny::radioButtons("report_format_chr","Report format:",
-                       #                     c("PDF" = "PDF",
-                       #                       "HTML" = "HTML",
-                       #                       "Word" = "Word"), inline=T),
-                       # shiny::downloadButton("report", "Generate a report")
                      ),
-
-                     # Main panel for displaying outputs ----
                      mainPanel(
-
-                       # Output: Tabset w/ plot, summary, and table ----
                        tabsetPanel(type = "tabs",
-                                   # tabPanel("Plot", plotOutput("plot")),
-                                   # tabPanel("Summary", verbatimTextOutput("summary")),
                                    tabPanel("Where",
                                             shiny::selectInput("pa_type_chr", h3("Type of geometry"),
                                                                choices = list("Select from a menu of existing options" = "Predefined boundary",
@@ -331,12 +305,9 @@ make_basic_ui_body_fn <- function(){
                                               condition = "input.pa_type_chr == \"HSS\"",
                                               shiny::uiOutput("headspaceControls")
                                             ),
-                                            #shiny::uiOutput("conditionalGeomFt1Nav"),
                                             shiny::conditionalPanel(
                                               condition = "input.pa_type_chr == \"Predefined boundary\" & input.confirmWhere2!=0",
-                                              shiny::uiOutput("boundYearControls")#,
-                                              # shiny::actionButton("confirmYear", "Confirm boundary year selection -->>")
-                                            ),
+                                              shiny::uiOutput("boundYearControls")                                            ),
                                             shiny::conditionalPanel(
                                               condition = "input.pa_type_chr == \"Predefined boundary\"",
                                               shiny::uiOutput("areaFilterControls"),
@@ -344,10 +315,7 @@ make_basic_ui_body_fn <- function(){
                                             ),
                                             shiny::uiOutput("proximityControls"),
                                             shiny::p(""),
-                                            shiny::uiOutput("startAgain")#,
-                                            #shiny::actionButton("returnToWhere", "<<-- Go back and change 'Where' settings"),
-                                            # shiny::p(""),
-                                            # shiny::actionButton("confirmAll", "Confirm these are the settings you wish to use -->>")
+                                            shiny::uiOutput("startAgain")
                                    ),
                                    shiny::tabPanel("About Springtides",
                                                    value = "about_springtides",
