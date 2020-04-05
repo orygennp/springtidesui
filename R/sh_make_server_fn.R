@@ -1126,6 +1126,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                           params_ls$model_start_date %>% format("%d %B %Y"),
                                           " and ",
                                           params_ls$model_end_date %>% format("%d %B %Y"))
+            params_ls$input_ls_path_chr <- params_ls$sim_data_r4_path_chr <- params_ls$sim_results_ls_path_chr <- NA_character_
             output_params_ls <- springtides::make_output_params_ls(input_params_ls = params_ls)
             saveRDS(output_params_ls, file = paste0(temp_dir_chr,'/output_params_ls.rds'))
             params_ls$output_params_ls_path_chr <- normalizePath(paste0(temp_dir_chr,'/output_params_ls.rds'))
