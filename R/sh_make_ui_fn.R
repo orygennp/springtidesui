@@ -254,8 +254,8 @@ make_basic_ui_body_fn <- function(){
                        tabsetPanel(type = "tabs",
                                    tabPanel("Where",
                                             shiny::selectInput("pa_type_chr", h3("Type of geometry"),
-                                                               choices = list("Select from a menu of existing options" = "Predefined boundary"#,
-                                                                              #"Generate your own" = "HSS"
+                                                               choices = list("Select from a menu of existing options" = "Predefined boundary",
+                                                                              "Generate your own" = "HSS"
                                                                               # ,
                                                                               # "Base on proximity to custom coordinates" = "Custom"
                                                                ),
