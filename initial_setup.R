@@ -2,6 +2,7 @@
 devtools::document()
 usethis::use_package("dplyr")
 #usethis::use_package("knitrBootstrap")
+usethis::use_package("leaflet")
 usethis::use_package("lubridate")
 # usethis::use_package("pkgload")
 usethis::use_package("magrittr")

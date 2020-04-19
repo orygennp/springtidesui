@@ -1,0 +1,32 @@
+---
+title: "Untitled"
+author: "Matthew Hamilton"
+date: "16/04/2020"
+output: html_document
+---
+
+```{r }
+library(leaflet)
+# m <- leaflet() %>%
+#   addTiles()   %>%
+# addMarkers(lng= 174.768, lat= -36.852, popup= "ThebirthplaceofR")
+# m
+r_data_dir_chr <- normalizePath("C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format")
+phn_sf <- ready4space::get_data(springtides::aus_pa_r4@lookup_tb@sp_data_pack_lup, # Filter by boundary year
+                                r_data_dir_chr = r_data_dir_chr,
+                                col_chr = "area_type",
+                                value_chr = "PHN")
+m<-leaflet(phn_sf) %>%
+      setView(lng = 133.25, lat = -27.15, zoom = 4) %>%
+       addProviderTiles("CartoDB.DarkMatter", layerId = "basetile",options = providerTileOptions(minZoom = 4)
+                        ) 
+  
+  
+m
+```
+
+```{r}
+m %>%
+  addPolygons()
+```
+
