@@ -107,8 +107,7 @@ make_basic_ui_body_fn <- function(){
                                             # shiny::actionButton("addInputBoundaries", "Add Boundaries"),
                                             # shiny::p(),
                                             # shiny::actionButton("clearInputBoundaries", "Clear Boundaries"),
-                                            shiny::p(),
-                                            shiny::uiOutput("text")
+                                            shiny::p()
                                    ),
                                    shiny::tabPanel("About Springtides",
                                                    value = "about_springtides",
