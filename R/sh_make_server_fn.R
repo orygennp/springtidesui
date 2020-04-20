@@ -36,7 +36,7 @@ filter_by_map_view_sf <- function(sf,
 }
 
 ## Modified from: https://rstudio.github.io/leaflet/markers.html
-getColor <- function(sf,
+get_color_chr <- function(sf,
                      col_chr = "service_name",
                      value_chr_vec = NA_character_) {
   if(ifelse(identical(value_chr_vec, character(0)),T,is.na(value_chr_vec))){
@@ -74,17 +74,21 @@ make_points_text_chr <- function(micro_chr_vec,
   }else{
     points_chr <- micro_chr_vec %>% paste0(collapse = ", ") %>% stringi::stri_replace_last_fixed( ',', ' and')
   }
-  paste0("Area within ",
-         ifelse(is.na(gdist_ttime_chr),
-                "",
-                ifelse(gdist_ttime_chr=="Geometric distance",
-                       paste0(gdist_dbl, " Km "),
-                       paste0(ttime_dbl, " Minutes Drive "))),
-         "of ",
-         points_chr,
-         ifelse(T,
-                paste0(" Headspace Centre",ifelse(length(micro_chr_vec)>1,"s","")),
-                " Custom Coordinates")) # Replace with condition logic for custom coordinates
+  if(points_chr == ""){
+    points_chr
+  }else{
+    paste0("Area within ",
+           ifelse(is.na(gdist_ttime_chr),
+                  "",
+                  ifelse(gdist_ttime_chr=="Geometric distance",
+                         paste0(gdist_dbl, " Km "),
+                         paste0(ttime_dbl, " Minutes Drive "))),
+           "of ",
+           points_chr,
+           ifelse(T,
+                  paste0(" Headspace Centre",ifelse(length(micro_chr_vec)>1,"s","")),
+                  " Custom Coordinates")) # Replace with condition logic for custom coordinates
+  }
 }
 #' @title make_basic_server_fn
 #' @description FUNCTION_DESCRIPTION
@@ -141,7 +145,8 @@ make_basic_server_fn <- function(r_data_dir_chr,
            package = data_pckg_chr,
            envir = environment())
       eval(parse(text = paste0("pa_r4<-",pa_r4_chr)))
-      spUnitVarChr <- shiny::reactive({
+      ## Reactive Functions
+      getSpUnitVarChr <- shiny::reactive({
           pa_r4@lookup_tb@sp_uid_lup %>%
             ready4space::get_data(value_chr = pa_r4@lookup_tb@sp_abbreviations_lup %>%
                                     ready4space::get_data(col_chr = "long_name",
@@ -150,13 +155,13 @@ make_basic_server_fn <- function(r_data_dir_chr,
 
 
       })
-      pointsSf <- shiny::reactive({
+      getPointsSf <- shiny::reactive({
         ready4space::get_data(pa_r4@lookup_tb@sp_data_pack_lup,
                               col_chr = "area_type",
                               value_chr = "HSS",
                               r_data_dir_chr = r_data_dir_chr)
       })
-      polysSf <- shiny::reactive({
+      getPolysSf <- shiny::reactive({
           filtered_dp_lup <- pa_r4@lookup_tb@sp_data_pack_lup %>%
             dplyr::filter(area_bound_yr == input$meso2_bound_yr)
           ready4space::get_data(filtered_dp_lup,
@@ -167,12 +172,12 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                                         value_chr = input$meso2_type_chr)
                                 )
       })
-      in_bounds_sf <- shiny::reactive({
+      cropSf <- shiny::reactive({
         if(input$pa_type_chr !="HSS"){
-          sf <- polysSf()
-          sp_unit_var_chr <- spUnitVarChr()
+          sf <- getPolysSf()
+          sp_unit_var_chr <- getSpUnitVarChr()
         }else{
-          sf <- pointsSf()
+          sf <- getPointsSf()
           sp_unit_var_chr <- "service_name"
         }
         if(is.null(input$map_bounds)) {
@@ -184,7 +189,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                 col_chr = sp_unit_var_chr)
         }
       })
-      base.map <- shiny::reactive({
+      makeBaseMap <- shiny::reactive({
         leaflet::leaflet() %>%
           leaflet::setView(lng = 133.25, lat = -27.15, zoom = 4) %>%
           leaflet::addProviderTiles("CartoDB.DarkMatter",
@@ -192,13 +197,35 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                     options = leaflet::providerTileOptions(minZoom = 3)
           )
       })
-      click.list <- shiny::reactiveValues(ids = vector())
+      ## Reactive Lists
+      markerClickLs <- shiny::reactiveValues(ids = vector())
+      polysClickLs <- shiny::reactiveValues(ids = vector())
+      reactive_ls <- shiny::reactiveValues(coordinates_chr_vec = character(0))
+      ## Observers
+      shiny::observeEvent(input$pa_type_chr, {
+        output$map <- leaflet::renderLeaflet({
+          polysClickLs$ids <- NULL
+          markerClickLs$ids <- NULL
+          makeBaseMap()
+        })
+      })
+      shiny::observeEvent(input$type_of_custom_geom_chr, {
+        output$map <- leaflet::renderLeaflet({
+          polysClickLs$ids <- NULL
+          markerClickLs$ids <- NULL
+          makeBaseMap()
+        })
+      })
+      shiny::observeEvent(input$type_of_service_chr, {
+        req(input$type_of_service_chr)
+        reactive_ls$coordinates_chr_vec <- input$type_of_service_chr
+      })
       shiny::observeEvent(input$map_shape_click, {
-        sp_unit_var_chr <- spUnitVarChr()
-        polys_sf <- polysSf()
+        sp_unit_var_chr <- getSpUnitVarChr()
+        polys_sf <- getPolysSf()
         click <- input$map_shape_click
-        if(click$id %in% click.list$ids){
-          click.list$ids <- click.list$ids[!click.list$ids %in% click$id]
+        if(click$id %in% polysClickLs$ids){
+          polysClickLs$ids <- polysClickLs$ids[!polysClickLs$ids %in% click$id]
           if(is.null(click$id) ){
             req(click$id)
           }else {
@@ -216,8 +243,8 @@ make_basic_server_fn <- function(r_data_dir_chr,
               )
           }
         }else{
-          click.list$ids <- c(click.list$ids, click$id) %>% sort()
-          clicked_sf <- polys_sf %>% dplyr::filter(!!rlang::sym(sp_unit_var_chr) %in% click.list$ids)
+          polysClickLs$ids <- c(polysClickLs$ids, click$id) %>% sort()
+          clicked_sf <- polys_sf %>% dplyr::filter(!!rlang::sym(sp_unit_var_chr) %in% polysClickLs$ids)
           if( is.null( click$id ) ){
             req( click$id )
           } else {
@@ -235,13 +262,12 @@ make_basic_server_fn <- function(r_data_dir_chr,
           }
         }
       })
-      marker_click.list <- shiny::reactiveValues(ids = vector())
       shiny::observeEvent(input$map_marker_click, {
-        points_sf <- pointsSf()
+        points_sf <- getPointsSf()
         sp_unit_var_chr <- "service_name"
         click <- input$map_marker_click
-        if(click$id %in% marker_click.list$ids){
-          marker_click.list$ids <- marker_click.list$ids[!marker_click.list$ids %in% click$id]
+        if(click$id %in% markerClickLs$ids){
+          markerClickLs$ids <- markerClickLs$ids[!markerClickLs$ids %in% click$id]
           if(is.null(click$id) ){
             req(click$id)
           }else {
@@ -250,99 +276,53 @@ make_basic_server_fn <- function(r_data_dir_chr,
               #leaflet::clearShapes() %>%
               addAwesomeMarkers(data = points_sf,
                                 layerId = ~ service_name,
-                                popup = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"),
-                                label = ~ as.character(service_name),
+                                #popup = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"),
+                                label = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"),
                                 icon= awesomeIcons(
                                   icon = 'ios-close',
                                   iconColor = 'black',
                                   library = 'ion',
-                                  markerColor = getColor(points_sf,
-                                                         value_chr_vec = marker_click.list$ids)
+                                  markerColor = get_color_chr(points_sf,
+                                                         value_chr_vec = markerClickLs$ids)
                                 ))
-              # leaflet::addPolygons(data = unclicked_sf,
-              #                      fillColor =  "orange",
-              #                      label = ~ paste(input$meso2_type_chr,":", unclicked_sf %>% dplyr::pull(!!rlang::sym(sp_unit_var_chr))),
-              #                      color = "#BDBDC3",
-              #                      layerId = eval(parse(text = paste0("~ ", sp_unit_var_chr))),
-              #                      # weight = 1
-              #                      stroke = T,
-              #                      fillOpacity = 0.5,
-              #                      highlightOptions = leaflet::highlightOptions(color = "white", weight = 2,bringToFront = TRUE)
-              # )
           }
         }else{
-          marker_click.list$ids <- c(marker_click.list$ids, click$id) %>% sort()
-          clicked_sf <- points_sf %>% dplyr::filter(!!rlang::sym(sp_unit_var_chr) %in% click.list$ids)
+          markerClickLs$ids <- c(markerClickLs$ids, click$id) %>% sort()
+          clicked_sf <- points_sf %>% dplyr::filter(!!rlang::sym(sp_unit_var_chr) %in% markerClickLs$ids)
           if( is.null( click$id ) ){
             req( click$id )
           } else {
             leaflet::leafletProxy(mapId = "map" ) %>%
               addAwesomeMarkers(data = points_sf,
                                 layerId = ~ service_name,
-                                popup = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"),
-                                label = ~ as.character(service_name),
+                                #popup = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"),
+                                label = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"),
                                 icon= awesomeIcons(
                                   icon = 'ios-close',
                                   iconColor = 'black',
                                   library = 'ion',
-                                  markerColor = getColor(points_sf,
-                                                         value_chr_vec = marker_click.list$ids)
+                                  markerColor = get_color_chr(points_sf,
+                                                         value_chr_vec = markerClickLs$ids)
                                 ))
-              # leaflet::addPolygons(data = clicked_sf,
-              #                      fillColor =  "red",
-              #                      label = paste(input$meso2_type_chr,":", clicked_sf %>% dplyr::pull(!!rlang::sym(sp_unit_var_chr))),
-              #                      color = "#BDBDC3",
-              #                      layerId = eval(parse(text = paste0("~ ", sp_unit_var_chr))),
-              #                      # weight = 1
-              #                      stroke = T,
-              #                      fillOpacity = 0.5,
-              #                      highlightOptions = leaflet::highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
-              # )
           }
         }
       })
-      output$map <- renderLeaflet({
-        base.map()
+      shiny::observeEvent(input$confirmYear, {
+        reactive_ls$geom_nav_dbl <- 1
+        sp_unit_var_chr <- getSpUnitVarChr()#"PHN_NAME"#
+        data_sf <- cropSf()
+        leaflet::leafletProxy("map", data = data_sf) %>%
+          leaflet::clearShapes() %>%
+          leaflet::addPolygons(fillColor =  "orange",
+                               label = ~ paste(input$meso2_type_chr,":", data_sf %>% dplyr::pull(!!rlang::sym(sp_unit_var_chr))),
+                               color = "#BDBDC3",
+                               layerId = eval(parse(text = paste0("~ ", sp_unit_var_chr))),
+                               # weight = 1
+                               stroke = T,
+                               fillOpacity = 0.5,
+                               highlightOptions = leaflet::highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
+          )
       })
-      output$polysList <- renderUI({
-        if(!is.null(input$map_shape_click)){
-          p(paste0(click.list$ids, collapse = ", ") %>%
-              stringi::stri_replace_last_fixed(',', ' and'))
-        }else{
-          p("")
-        }
-      })
-      output$pointsList <- renderUI({
-        if(!is.null(input$map_marker_click)){
-          make_points_text_chr(micro_chr_vec = marker_click.list$ids,
-                               pa_type_chr = input$pa_type_chr,
-                               gdist_ttime_chr = input$gdist_ttime_chr,
-                               gdist_dbl = input$gdist_dbl,
-                               ttime_dbl = input$ttime_dbl)
-          # p(paste0(marker_click.list$ids, collapse = ", ") %>%
-          #     stringi::stri_replace_last_fixed(',', ' and'))
-        }else{
-          p("")
-        }
-      })
-
-      reactive_ls <- shiny::reactiveValues()
-      # shiny::observeEvent(input$confirmYear, {
-      #   reactive_ls$geom_nav_dbl <- 1
-      #   sp_unit_var_chr <- spUnitVarChr()#"PHN_NAME"#
-      #   data_sf <- in_bounds_sf()
-      #   leaflet::leafletProxy("map", data = data_sf) %>%
-      #     leaflet::clearShapes() %>%
-      #     leaflet::addPolygons(fillColor =  "orange",
-      #                          label = ~ paste(input$meso2_type_chr,":", data_sf %>% dplyr::pull(!!rlang::sym(sp_unit_var_chr))),
-      #                          color = "#BDBDC3",
-      #                          layerId = eval(parse(text = paste0("~ ", sp_unit_var_chr))),
-      #                          # weight = 1
-      #                          stroke = T,
-      #                          fillOpacity = 0.5,
-      #                          highlightOptions = leaflet::highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
-      #     )
-      # })
       shiny::observeEvent(input$confirmWhere2, {
         if(is.null(reactive_ls$pa_type_chr)){
           test_lgl <- F
@@ -375,41 +355,50 @@ make_basic_server_fn <- function(r_data_dir_chr,
           reactive_ls$geom_nav_dbl <- 2
         }
       })
-      shiny::observeEvent(input$displayHSS, {
-        points_sf <- in_bounds_sf()#pointsSf()
-        if(nrow(points_sf)>0){
-          leaflet::leafletProxy("map", data = points_sf) %>%
-            leaflet::clearShapes() %>%
-            addAwesomeMarkers(data = points_sf,
-                              layerId = ~service_name,
-                              popup = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"),
-                              label = ~ as.character(service_name),
-                              icon=awesomeIcons(
-                                icon = 'ios-close',
-                                iconColor = 'black',
-                                library = 'ion',
-                                markerColor = getColor(points_sf)
-                              )
-            )
+      shiny::observeEvent(reactive_ls$coordinates_chr_vec, { #input$type_of_service_chr
+        if(length(reactive_ls$coordinates_chr_vec)==0){
+          output$map <- leaflet::renderLeaflet({
+            polysClickLs$ids <- NULL
+            markerClickLs$ids <- NULL
+            makeBaseMap()
+          })
+        }else{
+          points_sf <- cropSf()#getPointsSf()
+          if(nrow(points_sf)>0){
+            leaflet::leafletProxy("map", data = points_sf) %>%
+              leaflet::clearShapes() %>%
+              addAwesomeMarkers(data = points_sf,
+                                layerId = ~ service_name,
+                                popup = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"),
+                                label = ~ as.character(service_name),
+                                icon=awesomeIcons(
+                                  icon = 'ios-close',
+                                  iconColor = 'black',
+                                  library = 'ion',
+                                  markerColor = get_color_chr(points_sf)
+                                )
+              )
+          }
         }
+        #shiny::req(input$type_of_service_chr)
         })
       shiny::observeEvent(input$confirmYear, {
-        reactive_ls$geom_nav_dbl <- 1
-        sp_unit_var_chr <- spUnitVarChr()#"PHN_NAME"#
-        data_sf <- in_bounds_sf()
-        if(nrow(data_sf > 0)){
-          leaflet::leafletProxy("map", data = data_sf) %>%
-            leaflet::clearShapes() %>%
-            leaflet::addPolygons(fillColor =  "orange",
-                                 label = ~ paste(input$meso2_type_chr,":", data_sf %>% dplyr::pull(!!rlang::sym(sp_unit_var_chr))),
-                                 color = "#BDBDC3",
-                                 layerId = eval(parse(text = paste0("~ ", sp_unit_var_chr))),
-                                 # weight = 1
-                                 stroke = T,
-                                 fillOpacity = 0.5,
-                                 highlightOptions = leaflet::highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
-            )
-        }
+        # reactive_ls$geom_nav_dbl <- 1
+        # sp_unit_var_chr <- getSpUnitVarChr()#"PHN_NAME"#
+        # data_sf <- cropSf()
+        # if(nrow(data_sf > 0)){
+        #   leaflet::leafletProxy("map", data = data_sf) %>%
+        #     leaflet::clearShapes() %>%
+        #     leaflet::addPolygons(fillColor =  "orange",
+        #                          label = ~ paste(input$meso2_type_chr,":", data_sf %>% dplyr::pull(!!rlang::sym(sp_unit_var_chr))),
+        #                          color = "#BDBDC3",
+        #                          layerId = eval(parse(text = paste0("~ ", sp_unit_var_chr))),
+        #                          # weight = 1
+        #                          stroke = T,
+        #                          fillOpacity = 0.5,
+        #                          highlightOptions = leaflet::highlightOptions(color = "white", weight = 2, bringToFront = TRUE)
+        #     )
+        # }
         #
         bnd_sf <- readRDS(reactive_ls$meso2_choices_ls$meso2_type_tb %>%
                             dplyr::filter(area_bound_yr == input$meso2_bound_yr) %>%
@@ -461,8 +450,9 @@ make_basic_server_fn <- function(r_data_dir_chr,
         reactive_ls$meso2_chr_choices_vec <- NULL
         reactive_ls$meso2_first_chr <- NULL
         output$map <- leaflet::renderLeaflet({
-          click.list$ids <- NULL
-          base.map()
+          polysClickLs$ids <- NULL
+          markerClickLs$ids <- NULL
+          makeBaseMap()
         })
       })
       shiny::observeEvent(input$confirmDisorder, {
@@ -543,6 +533,31 @@ make_basic_server_fn <- function(r_data_dir_chr,
       #
       #   )
       # })
+      ## Outputs
+      output$map <- renderLeaflet({
+        makeBaseMap()
+      })
+      output$polysList <- renderUI({
+        if(!is.null(input$map_shape_click)){
+          p(paste0(polysClickLs$ids, collapse = ", ") %>%
+              stringi::stri_replace_last_fixed(',', ' and'))
+        }else{
+          p("")
+        }
+      })
+      output$pointsList <- renderUI({
+        if(!is.null(input$map_marker_click)){
+          make_points_text_chr(micro_chr_vec = markerClickLs$ids,
+                               pa_type_chr = input$pa_type_chr,
+                               gdist_ttime_chr = input$gdist_ttime_chr,
+                               gdist_dbl = input$gdist_dbl,
+                               ttime_dbl = input$ttime_dbl)
+          # p(paste0(markerClickLs$ids, collapse = ", ") %>%
+          #     stringi::stri_replace_last_fixed(',', ' and'))
+        }else{
+          p("")
+        }
+      })
       output$boundYearControls <- shiny::renderUI({
         if(is.null(reactive_ls$meso2_choices_ls)|ifelse(is.null(reactive_ls$geom_nav_dbl),T,reactive_ls$geom_nav_dbl<2))
           return()
@@ -561,11 +576,21 @@ make_basic_server_fn <- function(r_data_dir_chr,
           )
         }
       })
-      output$headspaceControls <- shiny::renderUI({
+      output$customGeometryControls <- shiny::renderUI({
         if(input$pa_type_chr !="HSS")
           return()
         shiny::tagList(
-          shiny::actionButton("displayHSS", "Display locations of Headspace centres")#,
+          shiny::selectInput("type_of_custom_geom_chr",
+                             shiny::p("Custom geometries based on proximity to"),
+                             choices = c("Service locations selected from a list" = "Coordinate lookup",
+                                         "Locations you define" = "User defined points")),
+          shiny::conditionalPanel(
+            condition = "input.type_of_custom_geom_chr == \"Coordinate lookup\" ",
+            shiny::checkboxGroupInput("type_of_service_chr",
+                                      shiny::p("Type of service"),
+                                      choices = pa_r4@lookup_tb@sp_site_coord_lup$service_type %>% unique())
+          )#,
+          #shiny::actionButton("displayMarkers", "Display locations of Headspace centres")#,
           # shiny::checkboxGroupInput("micro_chr_vec", "Headspace Centres",
           #                           choices = pa_r4@lookup_tb@sp_site_coord_lup %>%
           #                             dplyr::pull(service_name) %>% unique() %>% sort(),
@@ -573,13 +598,13 @@ make_basic_server_fn <- function(r_data_dir_chr,
         )
       })
       output$outputControls <- shiny::renderUI({
-        default_chr <- make_points_text_chr(micro_chr_vec = marker_click.list$ids,
+        default_chr <- make_points_text_chr(micro_chr_vec = markerClickLs$ids,
                                             pa_type_chr = input$pa_type_chr,
                                             gdist_ttime_chr = input$gdist_ttime_chr,
                                             gdist_dbl = input$gdist_dbl,
                                             ttime_dbl = input$ttime_dbl)
         if((input$pa_type_chr == "Predefined boundary" & ifelse(is.null(reactive_ls$geom_nav_dbl),F,reactive_ls$geom_nav_dbl >= 3) & ifelse(is.null(reactive_ls$reportDbl),F, reactive_ls$reportDbl==3)) |
-           (input$pa_type_chr != "Predefined boundary" & ifelse(identical(marker_click.list$ids,character(0)),F,length(marker_click.list$ids) > 0) & ifelse(is.null(reactive_ls$reportDbl),F, reactive_ls$reportDbl==3))){
+           (input$pa_type_chr != "Predefined boundary" & ifelse(identical(markerClickLs$ids,character(0)),F,length(markerClickLs$ids) > 0) & ifelse(is.null(reactive_ls$reportDbl),F, reactive_ls$reportDbl==3))){
           shiny::tagList(
             shiny::h3("Generate a custom report"),
             shiny::wellPanel(style = "background:gold",
@@ -639,7 +664,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
 
       })
       output$proximityControls <- shiny::renderUI({
-        if(input$pa_type_chr=="HSS" & length(marker_click.list$ids) == 0)
+        if(input$pa_type_chr=="HSS" & length(markerClickLs$ids) == 0)
           return()
         shiny::tagList(
           shiny::conditionalPanel(
@@ -684,12 +709,12 @@ make_basic_server_fn <- function(r_data_dir_chr,
             if(is.null(input$map_shape_click)){#input$meso2_chr
               meso2_chr <- NA_character_
             }else{
-              meso2_chr <- click.list$ids #input$meso2_chr
+              meso2_chr <- polysClickLs$ids #input$meso2_chr
             }
-            if(identical(marker_click.list$ids,character(0))){
+            if(identical(markerClickLs$ids,character(0))){
               micro_chr_vec <- NA_character_
             }else{
-              micro_chr_vec <- marker_click.list$ids
+              micro_chr_vec <- markerClickLs$ids
             }
             params_ls <- list(age_lower = input$age_range_int_vec[1],
                               age_upper = input$age_range_int_vec[2],
@@ -853,7 +878,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
             ),
             shiny::conditionalPanel(
               condition = "input.pa_type_chr == \"HSS\"",
-              shiny::uiOutput("headspaceControls")
+              shiny::uiOutput("customGeometryControls")
             ),
             shiny::conditionalPanel(
               condition = "input.pa_type_chr == \"Predefined boundary\" & input.confirmWhere2!=0",

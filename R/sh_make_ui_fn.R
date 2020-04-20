@@ -102,6 +102,7 @@ make_basic_ui_body_fn <- function(){
                                             # ),
                                             shiny::uiOutput("outputControls"),
                                             shiny::p(""),
+                                            #shiny::uiOutput("conditionalMap"),
                                             leaflet::leafletOutput("map"),
                                             shiny::p(),
                                             # shiny::actionButton("addInputBoundaries", "Add Boundaries"),
