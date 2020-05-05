@@ -35,6 +35,21 @@ out <- rmarkdown::render(paste0(temp_dir_chr,'/report.Rmd'),
                                 Word = rmarkdown::word_document()),
                         params = params_ls,
                         envir = new.env())
+r_data_dir_chr <- "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format"
+project_data_path_chr <- r_data_path_chr %>% stringr::str_replace("R_Format","Project")
+input <- list(report_format_chr = "HTML",
+              user_name_chr = "Anonymous User")
+out <- rmarkdown::render('inst/COVID_report.Rmd',
+                         switch(input$report_format_chr,
+                                PDF = rmarkdown::pdf_document(),
+                                HTML = rmarkdown::html_document(toc=T,
+                                                                toc_float = T,
+                                                                number_sections = T,
+                                                                theme = "journal"),
+                                Word = rmarkdown::word_document()),
+                         params = list(r_data_dir_chr = r_data_dir_chr,
+                                       output_params_ls_path_chr = paste0(project_data_path_chr,"/COVID19/output_params_ls.rds")),
+                         envir = new.env())
 
 # #
 #

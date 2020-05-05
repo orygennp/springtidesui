@@ -90,7 +90,7 @@ make_points_text_chr <- function(micro_chr_vec,
     paste0(proximity_chr,
            points_chr,
            ifelse(T,
-                  paste0(" Headspace Centre",ifelse(length(micro_chr_vec)>1,"s","")),
+                  paste0(" Headspace Centre",ifelse(length(micro_chr_vec)>1,"s","")), # Abstract
                   " Custom Coordinates")) # Replace with condition logic for custom coordinates
   }
 }
@@ -143,7 +143,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
     if(!is.null(credentials_tb)){
       result_auth <- shinymanager::secure_server(check_credentials = shinymanager::check_credentials(credentials_tb))
     }
-      data_pckg_chr <- "springtides"
+      data_pckg_chr <- "springtides" # Abstract
       pa_r4_chr <- "aus_pa_r4"
       data(list = pa_r4_chr,
            package = data_pckg_chr,
@@ -185,8 +185,8 @@ make_basic_server_fn <- function(r_data_dir_chr,
                               col_chr = "area_type",
                               value_chr = pa_r4@lookup_tb@sp_abbreviations_lup %>%
                                 ready4space::get_data(col_chr = "long_name",
-                                                      value_chr = input$type_of_service_chr %>%
-                                                        paste0(" Service")), # Need to reconcile names in coordinates_lup and abbreviations
+                                                      value_chr = input$type_of_service_chr #%>% paste0(" Service")
+                                                      ), # Need to reconcile names in coordinates_lup and abbreviations
                               r_data_dir_chr = r_data_dir_chr)
       })
       getPolysSf <- shiny::reactive({
@@ -230,7 +230,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
               leaflet::clearShapes() %>%
               addAwesomeMarkers(data = points_sf,
                                 layerId = ~ service_name,
-                                popup = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"),
+                                popup = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"), ## ABSTRACT
                                 label = ~ as.character(service_name),
                                 icon=awesomeIcons(
                                   icon = 'ios-close',
@@ -265,7 +265,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
         shiny::req(input$stat_chr)
         reactive_ls$statisticOnDbl <- 1
         reactive_ls$reportDbl <- ifelse(is.null(reactive_ls$reportDbl),1,min(reactive_ls$reportDbl+1,3))
-        reactive_ls$disorder_choices_vec <- springtides::get_input_vec(fn = springtides::get_disorder_choices_chr_vec,
+        reactive_ls$disorder_choices_vec <- springtides::get_input_vec(fn = springtides::get_disorder_choices_chr_vec, # Abstract
                                                                        args = list(lup_r4 = pa_r4@lookup_tb,
                                                                                    path_to_data_chr = r_data_dir_chr,
                                                                                    stat_chr = input$stat_chr,
@@ -305,15 +305,15 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                    "/",
                                    .,".rds"
                             )) %>%
-          springtides::filter_if_var_exists(var_chr = "STE_NAME16",
+          springtides::filter_if_var_exists(var_chr = "STE_NAME16", ### ABSTRACT
                                             var_val_xxx = "Other Territories",
                                             cond_chr = "!=") %>%
-          purrr::reduce(c("2899","6798","6799","7151"),
+          purrr::reduce(c("2899","6798","6799","7151"),# Abstract
                         .init = .,
                         ~ .x %>% springtides::filter_if_var_exists(var_chr = "POA_NAME",
                                                                    var_val_xxx = .y,
                                                                    cond_chr = "!=")) %>%
-          purrr::reduce(c("2899","6798","6799","7151"),
+          purrr::reduce(c("2899","6798","6799","7151"),# Abstract
                         .init = .,
                         ~ .x %>% springtides::filter_if_var_exists(var_chr = "POA_NAME16",
                                                                    var_val_xxx = .y,
@@ -347,12 +347,12 @@ make_basic_server_fn <- function(r_data_dir_chr,
         if(is.null(reactive_ls$pa_type_chr)){
           test_lgl <- F
         }else{
-          test_lgl <- input$pa_type_chr=="HSS"
+          test_lgl <- input$pa_type_chr=="HSS" ## ABSTRACT
         }
         if(!test_lgl){
           meso2_type_tb <- pa_r4@lookup_tb@sp_data_pack_lup %>%
             dplyr::filter(main_feature == "Boundary") %>%
-            dplyr::filter(area_type == input$meso2_type_chr %>% #reactive_ls$meso2_type_chr %>%
+            dplyr::filter(area_type == input$meso2_type_chr %>%
                             ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
                                                   lookup_variable = "long_name",
                                                   lookup_reference = .,
@@ -363,7 +363,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
             unique() %>%
             sort()
           meso2_uid_tb <- pa_r4@lookup_tb@sp_uid_lup %>%
-            dplyr::filter(spatial_unit == input$meso2_type_chr %>% #reactive_ls$meso2_type_chr %>%
+            dplyr::filter(spatial_unit == input$meso2_type_chr %>%
                             ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
                                                   lookup_variable = "long_name",
                                                   lookup_reference = .,
@@ -432,8 +432,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
               #leaflet::clearShapes() %>%
               addAwesomeMarkers(data = points_sf,
                                 layerId = ~ service_name,
-                                #popup = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"),
-                                label = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"),
+                                label = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"), ## ABSTRACT
                                 icon= awesomeIcons(
                                   icon = 'ios-close',
                                   iconColor = 'black',
@@ -451,8 +450,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
             leaflet::leafletProxy(mapId = "map" ) %>%
               addAwesomeMarkers(data = points_sf,
                                 layerId = ~ service_name,
-                                #popup = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"),
-                                label = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"),
+                                label = ~ paste0(service_name," ",service_type," in ",PHN_NAME, " PHN"), ## ABSTRACT
                                 icon= awesomeIcons(
                                   icon = 'ios-close',
                                   iconColor = 'black',
@@ -503,9 +501,9 @@ make_basic_server_fn <- function(r_data_dir_chr,
         }else{
           shiny::req(input$stat_chr)
           shiny::req(input$disorder_chr)
-          age_vec <- springtides::get_age_range_choices_int_vec(lup_r4 = pa_r4@lookup_tb,
+          age_vec <- springtides::get_age_range_choices_int_vec(lup_r4 = pa_r4@lookup_tb, # ABSTRACT
                                                                 path_to_data_chr = r_data_dir_chr,
-                                                                stat_chr = input$stat_chr,#input$stat_chr,#,
+                                                                stat_chr = input$stat_chr,
                                                                 disorder_chr = input$disorder_chr %>% #
                                                                   stringr::str_replace_all(" ","_"))
         }
@@ -568,7 +566,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
       })
       output$customGeometryControls <- shiny::renderUI({
         shiny::req(input$pa_type_chr)
-        if(input$pa_type_chr !="HSS")
+        if(input$pa_type_chr !="HSS") ## Abstract
           return()
         shiny::tagList(
           shiny::selectInput("type_of_custom_geom_chr",
@@ -582,12 +580,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                       choices = pa_r4@lookup_tb@sp_site_coord_lup$service_type %>% unique()),
             actionButton("confirmZoom",
                          "Show services in current map zoom -->>")
-          )#,
-          #shiny::actionButton("displayMarkers", "Display locations of Headspace centres")#,
-          # shiny::checkboxGroupInput("micro_chr_vec", "Headspace Centres",
-          #                           choices = pa_r4@lookup_tb@sp_site_coord_lup %>%
-          #                             dplyr::pull(service_name) %>% unique() %>% sort(),
-          #                           inline = T)
+          )
         )
       })
       output$dateValidation <- shiny::renderUI({
@@ -702,7 +695,9 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                shiny::p("Spatial unit"),
                                choices = pa_r4@lookup_tb@sp_data_pack_lup %>%
                                  dplyr::filter(main_feature == "Boundary") %>%
-                                 dplyr::filter(!area_type %in% c("AUS","HSS","SA1","SA2","XX1")) %>%
+                                 dplyr::filter(!area_type %in% c(#"AUS",
+                                                                 "HSS",#"SA1","SA2",
+                                                                 "XX1")) %>% ## ABSTRACT
                                  dplyr::pull(area_type) %>%
                                  unique() %>%
                                  purrr::map_chr(~ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
@@ -712,14 +707,13 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                                                        evaluate = F)) %>%
                                  sort()),
             shiny::actionButton("confirmWhere2", paste0("Confirm selection of ",
-                                                        ifelse(input$pa_type_chr=="HSS",
+                                                        ifelse(input$pa_type_chr=="HSS", ## ABSTRACT
                                                                "headspace centres",
                                                                "spatial unit"),
                                                         "  -->>"))
           )
         }else{
           shiny::tagList(
-            #shiny::p("Spatial unit"),
             shiny::HTML(paste("<b>","Spatial unit","</b>")),
             shiny::p(input$meso2_type_chr)
 
@@ -730,7 +724,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
       output$proximityControls <- shiny::renderUI({
         ## Extra reqs for conditional panels??
         shiny::req(input$pa_type_chr)
-        if(input$pa_type_chr=="HSS" & length(markerClickLs$ids) == 0)
+        if(input$pa_type_chr=="HSS" & length(markerClickLs$ids) == 0) ## Abstract
           return()
         shiny::tagList(
           shiny::conditionalPanel(
@@ -754,13 +748,13 @@ make_basic_server_fn <- function(r_data_dir_chr,
       })
       output$report <- shiny::downloadHandler(
         filename = function() {
-          paste('Springtides_Report', sep = '.', switch(
+          paste('Springtides_Report', sep = '.', switch( # Abstract
             input$report_format_chr, PDF = 'pdf', HTML = 'html', Word = 'docx'
           ))
         },
         content = function(file) {
           withProgress(message = 'Rendering, please wait!', {
-            path_to_template_chr <- system.file("report.Rmd", package = "springtidesui")#"report.Rmd"#
+            path_to_template_chr <- system.file("report.Rmd", package = "springtidesui") ## Abstract
             temp_dir_chr <- tempdir()
             file.copy(path_to_template_chr, paste0(temp_dir_chr,'/report.Rmd'), overwrite = TRUE)
             if(is.null(input$meso2_type_chr)){
@@ -784,7 +778,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
             }
             params_ls <- list(age_lower = input$age_range_int_vec[1],
                               age_upper = input$age_range_int_vec[2],
-                              authorship_1_chr =  "Report generated by the Orygen Springtides App",
+                              authorship_1_chr =  "Report generated by the Orygen Springtides App", # Abstract
                               authorship_2_chr =  paste0("Input parameters selected by ",input$user_name_chr),
                               data_pckg_chr = data_pckg_chr,
                               disorder_chr = input$disorder_chr %>%
@@ -800,15 +794,15 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                                       as.integer(input$meso2_bound_yr),
                                                       NA_real_),
                               meso2_chr = meso2_chr,
-                              meso2_name_chr = springtides::make_area_name_chr(pa_r4 = pa_r4,
+                              meso2_name_chr = springtides::make_area_name_chr(pa_r4 = pa_r4, # Abstract
                                                                                pa_type_chr = input$pa_type_chr,
                                                                                area_type_chr = meso2_type_chr,
                                                                                feature_chr = meso2_chr,
                                                                                area_name_chr = input$area_name_chr),
                               meso2_type_chr = meso2_type_chr,
                               micro_chr_vec = micro_chr_vec,
-                              model_end_date = min(input$dateRange[2] %>% lubridate::as_datetime(tz="Australia/Melbourne"), pa_r4@temporal_max),
-                              model_start_date = max(input$dateRange[1] %>% lubridate::as_datetime(tz="Australia/Melbourne"), pa_r4@temporal_min),
+                              model_end_date = min(input$dateRange[2] %>% lubridate::as_datetime(tz="Australia/Melbourne"), pa_r4@temporal_max), # Abstract
+                              model_start_date = max(input$dateRange[1] %>% lubridate::as_datetime(tz="Australia/Melbourne"), pa_r4@temporal_min), # Abstract
                               n_its_int = input$n_its_int,
                               pa_r4_chr = pa_r4_chr,
                               pa_type_chr = input$pa_type_chr,
@@ -825,9 +819,9 @@ make_basic_server_fn <- function(r_data_dir_chr,
                               uncertainty_1_int = input$uncertainty_int[1],
                               uncertainty_2_int = input$uncertainty_int[2],
                               user_name_chr = input$user_name_chr)
-            params_ls$title_chr <- paste0("Predicted ",
+            params_ls$title_chr <- paste0("Predicted ", ## Abstract
                                           springtides::tf_stat_chr(stat_chr = params_ls$stat_chr %>% tolower(),
-                                                                   disorder_chr = params_ls$disorder_chr),
+                                                                   disorder_chr = params_ls$disorder_chr), # Abstract
                                           " in young people aged ",
                                           params_ls$age_lower,
                                           " to ",
@@ -839,7 +833,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                           " and ",
                                           params_ls$model_end_date %>% format("%d %B %Y"))
             params_ls$input_ls_path_chr <- params_ls$sim_data_r4_path_chr <- params_ls$sim_results_ls_path_chr <- NA_character_
-            output_params_ls <- springtides::make_output_params_ls(input_params_ls = params_ls)
+            output_params_ls <- springtides::make_output_params_ls(input_params_ls = params_ls) # Abstract
             saveRDS(output_params_ls, file = paste0(temp_dir_chr,'/output_params_ls.rds'))
             params_ls$output_params_ls_path_chr <- normalizePath(paste0(temp_dir_chr,'/output_params_ls.rds'))
             out <- rmarkdown::render(paste0(temp_dir_chr,'/report.Rmd'),
@@ -871,7 +865,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
            ifelse(is.null(reactive_ls$statisticOnDbl),T,reactive_ls$statisticOnDbl==0)){
           shiny::tagList(
             shiny::selectInput("stat_chr", p("Statistic"),
-                               choices = springtides::get_input_ls(fn = springtides::make_stat_choices_ls,
+                               choices = springtides::get_input_ls(fn = springtides::make_stat_choices_ls, # Abstract
                                                                    args = NULL,
                                                                    n = Inf) %>% purrr::flatten_chr() %>% sort()),
             shiny::sliderInput("uncertainty_int", "Uncertainty Interval",
@@ -931,7 +925,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
           shiny::wellPanel(
             shiny::selectInput("pa_type_chr", shiny::p("Type of geometry"),
                                choices = list("Select from a menu of existing options" = "Predefined boundary",
-                                              "Generate your own" = "HSS"
+                                              "Generate your own" = "HSS" # Abstract
                                               # ,
                                               # "Base on proximity to custom coordinates" = "Custom"
                                ),
@@ -941,7 +935,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
               shiny::uiOutput("predefinedControls")
             ),
             shiny::conditionalPanel(
-              condition = "input.pa_type_chr == \"HSS\"",
+              condition = "input.pa_type_chr == \"HSS\"", # Abstract
               shiny::uiOutput("customGeometryControls")
             ),
             shiny::conditionalPanel(

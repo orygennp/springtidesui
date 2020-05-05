@@ -77,43 +77,16 @@ make_basic_ui_body_fn <- function(){
                      mainPanel(
                        tabsetPanel(type = "tabs",
                                    tabPanel("Profile",
-                                            # shiny::selectInput("pa_type_chr", h3("Type of geometry"),
-                                            #                    choices = list("Select from a menu of existing options" = "Predefined boundary",
-                                            #                                   "Generate your own" = "HSS"
-                                            #                                   # ,
-                                            #                                   # "Base on proximity to custom coordinates" = "Custom"
-                                            #                    ),
-                                            #                    selected = "Predefined boundary"),
-                                            # shiny::conditionalPanel(
-                                            #   condition = "input.pa_type_chr == \"Predefined boundary\"",
-                                            #   shiny::uiOutput("predefinedControls")
-                                            # ),
-                                            # shiny::conditionalPanel(
-                                            #   condition = "input.pa_type_chr == \"HSS\"",
-                                            #   shiny::uiOutput("headspaceControls")
-                                            # ),
-                                            # shiny::conditionalPanel(
-                                            #   condition = "input.pa_type_chr == \"Predefined boundary\" & input.confirmWhere2!=0",
-                                            #   shiny::uiOutput("boundYearControls")                                            ),
-                                            # shiny::conditionalPanel(
-                                            #   condition = "input.pa_type_chr == \"Predefined boundary\"",
-                                            #   shiny::uiOutput("areaFilterControls"),
-                                            #   shiny::uiOutput("areaControls")
-                                            # ),
                                             shiny::uiOutput("outputControls"),
                                             shiny::p(""),
-                                            #shiny::uiOutput("conditionalMap"),
                                             leaflet::leafletOutput("map"),
                                             shiny::p(),
-                                            # shiny::actionButton("addInputBoundaries", "Add Boundaries"),
-                                            # shiny::p(),
-                                            # shiny::actionButton("clearInputBoundaries", "Clear Boundaries"),
                                             shiny::p()
                                    ),
-                                   shiny::tabPanel("About Springtides",
-                                                   value = "about_springtides",
+                                   shiny::tabPanel("About Springtides", # Abstract
+                                                   value = "about_springtides", # Abstract
                                                    shiny::p(),
-                                                   shiny::h1("App and model"),
+                                                   shiny::h1("App and model"),# Abstract [And below]
                                                    shiny::p("The Springtides App is a simple user interface to a computer simulation model of the epidemiology of mental and substance use disorders in young people, also called Springtides. When using this app you are asked a number of questions about the type of epidemiological profile that you would like. Your answers are then passed to an instance of the simulation model and a report is generated for you to download. That report provides both a summary of the model results and an overview of the data and algorithms that produced those results."),
                                                    shiny::h1("Modelling framework and development context"),
                                                    shiny::p("The Springtides app and simulation model were developed by Orygen in the statistical software R using Orygen's", shiny::a("readyforwhatsnext",     href="https://readyforwhatsnext.github.io/readyforwhatsnext/"),"open source modelling framework. The source code for both Springtides and readyforwhatsnext is due for public release as R packages later in 2020. Currently, access to these code libraries is by invitation only as testing is currently ongoing. This current version of the Springtides model is supported by an Australian data pack. However, the algorithms that run the model are compatible with data packs from other jurisdictions."),
