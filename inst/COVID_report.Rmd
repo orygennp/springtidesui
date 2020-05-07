@@ -63,27 +63,6 @@ header-includes:
 ```{r echo=F, warning=F, message=F, eval=T}
 library(magrittr)
 library(kableExtra)
-r_data_path_chr <- "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format"
-project_data_path_chr <- r_data_path_chr %>% stringr::str_replace("R_Format","Project/COVID19")
-path_to_sydney_output_tb <- paste0(project_data_path_chr,"/Copy of Psychological Distress - North Coast outputs.xlsx")
-youth_distress_tb <- readxl::read_xlsx(path_to_sydney_output_tb,
-                                       range = "L3:U734")
-all_distress_tb <- readxl::read_xlsx(path_to_sydney_output_tb,
-                                     range = "A3:J734")
-scenarios_tb <- readxl::read_excel(path_to_sydney_output_tb,
-                                   range = "W3:X9",
-                                   col_names = F) %>%
-  dplyr::rename(Scenario = ...1,
-                Description = ...2)
-start_date_dtm <- lubridate::ymd_hms("2011-01-01 00:00:00", 
-                                     tz = "Australia/Melbourne") 
-youth_distress_tb <- youth_distress_tb %>%
-  dplyr::mutate_at(dplyr::vars(dplyr::starts_with('Scen')), .funs = list(RR = ~(1+(.-Baseline)/Baseline))) %>%
-  dplyr::mutate(week_starting_dtm = purrr::map_dbl(t,
-                                                   ~ start_date_dtm + lubridate::weeks(.x)))
-attributes(youth_distress_tb$week_starting_dtm) <- attributes(start_date_dtm)
-
-
 # if(is.na(params$output_params_ls_path_chr)){
 #   output_params_ls <- springtides::make_output_params_ls(input_params_ls = params)
 # }else{
@@ -92,45 +71,54 @@ attributes(youth_distress_tb$week_starting_dtm) <- attributes(start_date_dtm)
 
 ```
 
-```{r echo=F, warning=F, message=F, eval=T}
-## MAKE FN
-pa_dir_chr <- "North_Coast_PHN"
-pa_x_params_ls_path_chr <- paste0(project_data_path_chr,
-                                    "/",
-                                    pa_dir_chr,
-                                    "/output_params_ls.rds")
-pa_x_params_ls <- readRDS(pa_x_params_ls_path_chr)
-prev_params_dbl_vec <- c(which.min(abs(youth_distress_tb$week_starting_dtm-lubridate::ymd_hms("2014-01-01 00:00:00", 
-                                     tz = "Australia/Melbourne"))),
-                       which.min(abs(youth_distress_tb$week_starting_dtm-lubridate::ymd_hms("2011-01-01 00:00:00", # 2007 not available
-                                     tz = "Australia/Melbourne"))))
-prev_data_dbl_vec <- youth_distress_tb %>% 
-  dplyr::slice(prev_params_dbl_vec) %>%
-  dplyr::pull(Baseline)
-start_end_dbl_vec <- c(which.min(abs(youth_distress_tb$week_starting_dtm-pa_x_params_ls$sim_data_r4@model_start_date)),
-                       which.min(abs(youth_distress_tb$week_starting_dtm-pa_x_params_ls$sim_data_r4@model_end_date)))
-RR_tb <- youth_distress_tb %>% dplyr::slice(start_end_dbl_vec)
-t0_RR_tb <- RR_tb %>%
-  dplyr::slice(1) 
-tx_RR_tb <- RR_tb %>%
-  dplyr::slice(2) 
-base_case_syd_RR_lup <- tibble::tibble(age_dbl = pa_x_params_ls$age_lower:pa_x_params_ls$age_upper,
-                                       t0_RR = purrr::map_dbl(age_dbl,
-                                                              ~ ifelse(.x<18,
-                                                                       1+(t0_RR_tb$Baseline-prev_data_dbl_vec[1])/prev_data_dbl_vec[1],
-                                                               1+(t0_RR_tb$Baseline-prev_data_dbl_vec[2])/prev_data_dbl_vec[2]    )
-                                                           
-                                                                   
-                                                                   ),
-                                       tx_RR = purrr::map_dbl(age_dbl,
-                                                              ~ ifelse(.x<18,
-                                                                       1+(tx_RR_tb$Baseline-prev_data_dbl_vec[1])/prev_data_dbl_vec[1],
-                                                               1+(tx_RR_tb$Baseline-prev_data_dbl_vec[2])/prev_data_dbl_vec[2]    )
-                                                           
-                                                                   
-                                                                   ))
 
-update_by_col_name_tb <- function(res_tb,col_pfx_chr,time_RR_chr,new_pfx_chr = "SYD_BC_"){
+```{r echo=F, warning=F, message=F, eval=T}
+add_shock_RR_tb <- function(res_tb,
+                                RR_tb,
+                                starts_with_chr_vec){
+            res_tb %>%
+               dplyr::mutate_at(dplyr::vars(dplyr::starts_with(starts_with_chr_vec[1])), #t0_prev
+                                       .funs = list(s1_excess = ~ RR_tb %>%
+  dplyr::slice(1) %>% dplyr::pull(`Scenario 1_RR`)*.,
+                                                    s2_excess = ~ RR_tb %>%
+  dplyr::slice(1) %>% dplyr::pull(`Scenario 2_RR`) *.,
+                                                    s1_i1_excess = ~ RR_tb %>%
+  dplyr::slice(1) %>% dplyr::pull(`Scen. 1, int. 1_RR`) *.,
+                                                    s1_i2_excess = ~ RR_tb %>%
+  dplyr::slice(1) %>% dplyr::pull(`Scen. 1, int. 2_RR`) *.,
+                                                    s1_i3_excess = ~ RR_tb %>%
+  dplyr::slice(1) %>% dplyr::pull(`Scen. 1, int. 3_RR`) *.,
+                                                    s1_i4_excess = ~ RR_tb %>%
+  dplyr::slice(1) %>% dplyr::pull(`Scen. 1, int. 4_RR`) *.,
+                                                    s1_i5_excess = ~ RR_tb %>%
+  dplyr::slice(1) %>% dplyr::pull(`Scen. 1, int. 5_RR`) *.)
+                                
+                                ) %>%
+               dplyr::mutate_at(dplyr::vars(dplyr::starts_with(starts_with_chr_vec[2])), #tx_prev
+                                       .funs = list(s1_excess = ~ RR_tb %>%
+  dplyr::slice(2) %>% dplyr::pull(`Scenario 1_RR`)*.,
+                                                    s2_excess = ~ RR_tb %>%
+  dplyr::slice(2) %>% dplyr::pull(`Scenario 2_RR`) *.,
+                                                    s1_i1_excess = ~ RR_tb %>%
+  dplyr::slice(2) %>% dplyr::pull(`Scen. 1, int. 1_RR`) *.,
+                                                    s1_i2_excess = ~ RR_tb %>%
+  dplyr::slice(2) %>% dplyr::pull(`Scen. 1, int. 2_RR`) *.,
+                                                    s1_i3_excess = ~ RR_tb %>%
+  dplyr::slice(2) %>% dplyr::pull(`Scen. 1, int. 3_RR`) *.,
+                                                    s1_i4_excess = ~ RR_tb %>%
+  dplyr::slice(2) %>% dplyr::pull(`Scen. 1, int. 4_RR`) *.,
+                                                    s1_i5_excess = ~ RR_tb %>%
+  dplyr::slice(2) %>% dplyr::pull(`Scen. 1, int. 5_RR`) *.)
+                                
+               ) %>% dplyr::rename_at(
+                                  dplyr::vars(ends_with("_excess")), function(x) { toupper(x) }
+)
+                                }
+add_alt_model_RR_tb <- function(res_tb,
+                                  col_pfx_chr,
+                                  time_RR_chr,
+                                  new_pfx_chr = "SYD_BC_",
+                                  RR_lup){
   all_names_chr_vec <- res_tb %>% names()
   target_cols_chr_vec <- all_names_chr_vec[all_names_chr_vec %>% startsWith(col_pfx_chr)]#t0_prev
 
@@ -142,13 +130,13 @@ update_by_col_name_tb <- function(res_tb,col_pfx_chr,time_RR_chr,new_pfx_chr = "
   target_cols_chr_vec <- target_cols_chr_vec[!target_cols_chr_vec %in% sum_cols_chr_vec]
   target_age_chr_vec <- purrr::map_chr(target_cols_chr_vec,
                                          ~ stringr::str_sub(.x,start=-2))  
-    purrr::reduce(1:(length(target_cols_chr_vec)),
+  res_tb <- purrr::reduce(1:(length(target_cols_chr_vec)),
                          .init = res_tb,
                   ~ {
                     tb <- .x
                     col_chr <- target_cols_chr_vec[.y]
                     age_dbl <- target_age_chr_vec[.y]
-                    RR_dbl <- ready4utils::data_get(base_case_syd_RR_lup,
+                    RR_dbl <- ready4utils::data_get(RR_lup,
                                                     lookup_reference = age_dbl,
                                                     lookup_variable = "age_dbl",
                                                     target_variable = time_RR_chr,#"t0_RR"
@@ -165,47 +153,258 @@ update_by_col_name_tb <- function(res_tb,col_pfx_chr,time_RR_chr,new_pfx_chr = "
                                                                                                    )) 
                       
                     
-    }) %>%
-      purrr::reduce(fm_sum_cols_chr_vec,
-                    ~ .x
-                    ## ADD FN HERE
-                    ) %>%
-      ## ADD SUM HERE
+    })
+  female_cols_chr_vec <- paste0(new_pfx_chr,
+                                target_cols_chr_vec["f_"==target_cols_chr_vec %>% stringr::str_sub(start=-4,end=-3)])
+  male_cols_chr_vec <- paste0(new_pfx_chr,
+                              target_cols_chr_vec["f_"==target_cols_chr_vec %>% stringr::str_sub(start=-4,end=-3)])
+  fm_sum_cols_chr_vec <- paste0(new_pfx_chr,fm_sum_cols_chr_vec)
+  purrr::reduce(list(female = list(fm_sum_cols_chr_vec[1],
+                                     female_cols_chr_vec),
+                       male = list(fm_sum_cols_chr_vec[2],
+                                   male_cols_chr_vec)),
+                       .init = res_tb,
+                    ~ .x %>%
+    dplyr::mutate(!!rlang::sym(.y[[1]][1]) := dplyr::select(., .y[[2]]) %>% rowSums(na.rm = TRUE)))  %>%
+    dplyr::mutate(!!rlang::sym(paste0(new_pfx_chr,p_sum_col_chr_vec)) := dplyr::select(.,fm_sum_cols_chr_vec) %>% rowSums(na.rm = TRUE))
+
 }
-results_ls <- pa_x_params_ls$sim_results_ls %>%
+import_model_output_tb <- function(path_to_K10_data_chr,
+                                   range_ls,
+                                   start_date_dtm){
+  purrr::map(range_ls,
+             ~ {
+               tb <- readxl::read_xlsx(path_to_K10_data_chr,
+                                       range = .x)
+tb <- tb %>%
+  dplyr::mutate_at(dplyr::vars(dplyr::starts_with('Scen')), .funs = list(RR = ~(1+(.-Baseline)/Baseline))) %>%
+  dplyr::mutate(week_starting_dtm = purrr::map_dbl(t,
+                                                   ~ start_date_dtm + lubridate::weeks(.x)))
+attributes(tb$week_starting_dtm) <- attributes(start_date_dtm)
+tb             
+}) %>%
+    stats::setNames(names(range_ls))
+
+}
+make_base_case_lup <- function(pa_x_params_ls,
+                               dates_idx_dbl_vec, # Named
+                               dates_nms_chr_vec,
+                               RR_tb,
+                               prev_data_dbl_vec){
+
+  purrr::reduce(1:length(dates_idx_dbl_vec),
+                .init = tibble::tibble(age_dbl = pa_x_params_ls$age_lower:pa_x_params_ls$age_upper),
+                ~ {
+                  row_idx_dbl = .y
+                  dplyr::mutate(.x,!!rlang::sym(dates_nms_chr_vec[.y]) := purrr::map_dbl(age_dbl,
+                                                                                         
+                                                              ~ {
+                                                                ifelse(.x<18, # Change to switch or lookup to cover all posible age ranges
+                                                                       1+(RR_tb %>%
+  dplyr::slice(row_idx_dbl) %>% dplyr::pull(Baseline)-prev_data_dbl_vec[1])/prev_data_dbl_vec[1],
+                                                               1+(RR_tb %>%
+  dplyr::slice(row_idx_dbl) %>% dplyr::pull(Baseline)-prev_data_dbl_vec[2])/prev_data_dbl_vec[2]    )
+                                                           
+                                                              }
+                                                                   ))
+                })
+}
+update_results_ls <- function(pa_x_params_ls_path_chr,
+                              youth_distress_tb,
+                              epi_data_dtm_ls){
+  pa_x_params_ls <- readRDS(pa_x_params_ls_path_chr)
+  prev_params_dbl_vec <- purrr::map_dbl(epi_data_dtm_ls,
+                                        ~ which.min(abs(youth_distress_tb$week_starting_dtm-.x)))
+  # prev_params_dbl_vec <- c(which.min(abs(youth_distress_tb$week_starting_dtm-lubridate::ymd_hms("2014-01-01 00:00:00", 
+#                                      tz = "Australia/Melbourne"))),
+#                        which.min(abs(youth_distress_tb$week_starting_dtm-lubridate::ymd_hms("2011-01-01 00:00:00", # 2007 not available
+#                                      tz = "Australia/Melbourne"))))
+prev_data_dbl_vec <- youth_distress_tb %>% 
+  dplyr::slice(prev_params_dbl_vec) %>%
+  dplyr::pull(Baseline)
+ti_col_chr_vec <- names(pa_x_params_ls$sim_results_ls[[1]])[names(pa_x_params_ls$sim_results_ls[[1]]) %>% startsWith("ti_")] %>% stringr::str_sub(end=-6) %>% unique()
+dates_nms_chr_vec <- c("t0_prev",
+                       #ti_col_chr_vec, ADD BACK IN WHEN PREVALENCE CALCULATED FOR i TIME POINTS
+                      "tx_prev")
+int_dtm_vec <- paste0(ti_col_chr_vec %>% stringr::str_sub(start=4, end=7),
+       "-",
+       ti_col_chr_vec %>% stringr::str_sub(start=8, end=9),
+       "-",
+       ti_col_chr_vec %>% stringr::str_sub(start=10, end=11)) %>%
+  lubridate::ymd(tz = "Australia/Melbourne")
+dates_idx_dbl_vec <- purrr::map_dbl(c(pa_x_params_ls$sim_data_r4@model_start_date,
+                                      #int_dtm_vec, ADD BACK IN WHEN PREVALENCE CALCULATED FOR i TIME POINTS
+                                      pa_x_params_ls$sim_data_r4@model_end_date),
+                                    ~ which.min(abs(youth_distress_tb$week_starting_dtm-.x)))
+## Add Interval Times
+RR_tb <- youth_distress_tb %>% dplyr::slice(dates_idx_dbl_vec)
+# t0_RR_tb <- RR_tb %>%
+#   dplyr::slice(1) 
+# tx_RR_tb <- RR_tb %>%
+#   dplyr::slice(2) 
+base_case_syd_RR_lup <- make_base_case_lup(pa_x_params_ls = pa_x_params_ls,
+                                           dates_idx_dbl_vec = dates_idx_dbl_vec,
+                                           dates_nms_chr_vec = dates_nms_chr_vec,
+                                           RR_tb = RR_tb,
+                                           prev_data_dbl_vec = prev_data_dbl_vec)
+alt_results_ls <- pa_x_params_ls$sim_results_ls %>%
   purrr::map(~ {
-    update_by_col_name_tb(res_tb = .x,
-                          col_pfx_chr = "t0_prev",
-                          time_RR_chr = "t0_RR")  %>%
-          update_by_col_name_tb(col_pfx_chr = "tx_prev",
-                          time_RR_chr = "tx_RR") -> test
-      
-               # dplyr::mutate_at(dplyr::vars(dplyr::starts_with('t0_prev')),
-               #                  )
-               dplyr::mutate_at(dplyr::vars(dplyr::starts_with('t0_prev')), 
-                                       .funs = list(s1_excess = ~ t0_RR_tb$`Scenario 1_RR`*.,
-                                                    s2_excess = ~ t0_RR_tb$`Scenario 2_RR` *.,
-                                                    s1_i1_excess = ~ t0_RR_tb$`Scen. 1, int. 1_RR` *.,
-                                                    s1_i2_excess = ~ t0_RR_tb$`Scen. 1, int. 2_RR` *.,
-                                                    s1_i3_excess = ~ t0_RR_tb$`Scen. 1, int. 3_RR` *.,
-                                                    s1_i4_excess = ~ t0_RR_tb$`Scen. 1, int. 4_RR` *.,
-                                                    s1_i5_excess = ~ t0_RR_tb$`Scen. 1, int. 5_RR` *.)
-                                
-                                ) %>%
-               dplyr::mutate_at(dplyr::vars(dplyr::starts_with('tx_prev')), 
-                                       .funs = list(s1_excess = ~ tx_RR_tb$`Scenario 1_RR`*.,
-                                                    s2_excess = ~ tx_RR_tb$`Scenario 2_RR` *.,
-                                                    s1_i1_excess = ~ tx_RR_tb$`Scen. 1, int. 1_RR` *.,
-                                                    s1_i2_excess = ~ tx_RR_tb$`Scen. 1, int. 2_RR` *.,
-                                                    s1_i3_excess = ~ tx_RR_tb$`Scen. 1, int. 3_RR` *.,
-                                                    s1_i4_excess = ~ tx_RR_tb$`Scen. 1, int. 4_RR` *.,
-                                                    s1_i5_excess = ~ tx_RR_tb$`Scen. 1, int. 5_RR` *.)
-                                
-               ) %>% dplyr::rename_at(
-                                  dplyr::vars(ends_with("_excess")), function(x) { toupper(x) }
-)
+    .x %>%
+      add_shock_RR_tb(RR_tb = RR_tb,
+                      starts_with_chr_vec = c("t0_prev","tx_prev")) %>%
+    add_alt_model_RR_tb(col_pfx_chr = "t0_prev",
+                          time_RR_chr = "t0_RR",
+                          RR_lup = base_case_syd_RR_lup)  %>%
+          add_alt_model_RR_tb(col_pfx_chr = "tx_prev",
+                          time_RR_chr = "tx_RR",
+                          RR_lup = base_case_syd_RR_lup) %>%
+            add_shock_RR_tb(RR_tb = RR_tb,
+                      starts_with_chr_vec = c("SYD_BC_t0_prev","SYD_BC_tx_prev"))
+
                }
 )
+}
+```
+
+```{r echo=F, warning=F, message=F, eval=T}
+r_data_path_chr <- "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format"
+project_data_path_chr <- r_data_path_chr %>% stringr::str_replace("R_Format","Project/COVID19")
+path_to_K10_data_chr <- paste0(project_data_path_chr,"/Copy of Psychological Distress - North Coast outputs.xlsx")
+start_date_dtm <- lubridate::ymd_hms("2011-01-01 00:00:00", 
+                                     tz = "Australia/Melbourne") 
+```
+
+
+
+```{r echo=F, warning=F, message=F, eval=T}
+range_ls <- list(youth_distress_tb = "L3:U734",
+                 all_distress_tb = "A3:J734")
+distress_tbs_ls <- import_model_output_tb(path_to_K10_data_chr = path_to_K10_data_chr,
+                                          range_ls = range_ls,
+                                          start_date_dtm = start_date_dtm)
+#   
+#   
+#   all_distress_tb <- readxl::read_xlsx(path_to_K10_data_chr,
+#                                      range = "A3:J734")
+# youth_distress_tb <- readxl::read_xlsx(path_to_K10_data_chr,
+#                                        range = "L3:U734")
+# youth_distress_tb <- youth_distress_tb %>%
+#   dplyr::mutate_at(dplyr::vars(dplyr::starts_with('Scen')), .funs = list(RR = ~(1+(.-Baseline)/Baseline))) %>%
+#   dplyr::mutate(week_starting_dtm = purrr::map_dbl(t,
+#                                                    ~ start_date_dtm + lubridate::weeks(.x)))
+# attributes(youth_distress_tb$week_starting_dtm) <- attributes(start_date_dtm)
+
+scenarios_tb <- readxl::read_excel(path_to_K10_data_chr,
+                                   range = "W3:X9",
+                                   col_names = F) %>%
+  dplyr::rename(Scenario = ...1,
+                Description = ...2)
+```
+
+
+```{r echo=F, warning=F, message=F, eval=T}
+## MAKE FN
+pa_dir_chr <- "North_Coast_PHN"
+pa_x_params_ls_path_chr <- paste0(project_data_path_chr,
+                                    "/",
+                                    pa_dir_chr,
+                                    "/output_params_ls.rds")
+epi_data_dtm_ls <- list(age_12_17 = lubridate::ymd_hms("2014-01-01 00:00:00", 
+                                     tz = "Australia/Melbourne"),
+                        age_18_25 = lubridate::ymd_hms("2011-01-01 00:00:00", # 2007 not available
+                                     tz = "Australia/Melbourne"))
+
+new_alt_results_ls <- update_results_ls(pa_x_params_ls_path_chr = pa_x_params_ls_path_chr,
+                                        youth_distress_tb = distress_tbs_ls$youth_distress_tb,
+                                        epi_data_dtm_ls = epi_data_dtm_ls)
+# pa_x_params_ls <- readRDS(pa_x_params_ls_path_chr)
+# prev_params_dbl_vec <- c(which.min(abs(youth_distress_tb$week_starting_dtm-lubridate::ymd_hms("2014-01-01 00:00:00", 
+#                                      tz = "Australia/Melbourne"))),
+#                        which.min(abs(youth_distress_tb$week_starting_dtm-lubridate::ymd_hms("2011-01-01 00:00:00", # 2007 not available
+#                                      tz = "Australia/Melbourne"))))
+# prev_data_dbl_vec <- youth_distress_tb %>% 
+#   dplyr::slice(prev_params_dbl_vec) %>%
+#   dplyr::pull(Baseline)
+# ti_col_chr_vec <- names(pa_x_params_ls$sim_results_ls[[1]])[names(pa_x_params_ls$sim_results_ls[[1]]) %>% startsWith("ti_")] %>% stringr::str_sub(end=-6) %>% unique()
+# int_dtm_vec <- paste0(ti_col_chr_vec %>% stringr::str_sub(start=4, end=7),
+#        "-",
+#        ti_col_chr_vec %>% stringr::str_sub(start=8, end=9),
+#        "-",
+#        ti_col_chr_vec %>% stringr::str_sub(start=10, end=11)) %>%
+#   lubridate::ymd()
+# start_end_dbl_vec <- c(which.min(abs(youth_distress_tb$week_starting_dtm-pa_x_params_ls$sim_data_r4@model_start_date)),
+#                        which.min(abs(youth_distress_tb$week_starting_dtm-pa_x_params_ls$sim_data_r4@model_end_date)))
+# ## Add Interval Times
+# RR_tb <- youth_distress_tb %>% dplyr::slice(start_end_dbl_vec)
+# t0_RR_tb <- RR_tb %>%
+#   dplyr::slice(1) 
+# tx_RR_tb <- RR_tb %>%
+#   dplyr::slice(2) 
+# ## Make below a fn to do all intervening timepoints
+# base_case_syd_RR_lup <- tibble::tibble(age_dbl = pa_x_params_ls$age_lower:pa_x_params_ls$age_upper,
+#                                        t0_RR = purrr::map_dbl(age_dbl,
+#                                                               ~ ifelse(.x<18,
+#                                                                        1+(t0_RR_tb$Baseline-prev_data_dbl_vec[1])/prev_data_dbl_vec[1],
+#                                                                1+(t0_RR_tb$Baseline-prev_data_dbl_vec[2])/prev_data_dbl_vec[2]    )
+#                                                            
+#                                                                    
+#                                                                    ),
+#                                        tx_RR = purrr::map_dbl(age_dbl,
+#                                                               ~ ifelse(.x<18,
+#                                                                        1+(tx_RR_tb$Baseline-prev_data_dbl_vec[1])/prev_data_dbl_vec[1],
+#                                                                1+(tx_RR_tb$Baseline-prev_data_dbl_vec[2])/prev_data_dbl_vec[2])))
+# 
+# 
+# alt_results_ls <- pa_x_params_ls$sim_results_ls %>%
+#   purrr::map(~ {
+#     .x %>%
+#       add_shock_RR_tb(RR_tb = RR_tb,
+#                       starts_with_chr_vec = c("t0_prev","tx_prev")) %>%
+#     add_alt_model_RR_tb(col_pfx_chr = "t0_prev",
+#                           time_RR_chr = "t0_RR",
+#                           RR_lup = base_case_syd_RR_lup)  %>%
+#           add_alt_model_RR_tb(col_pfx_chr = "tx_prev",
+#                           time_RR_chr = "tx_RR",
+#                           RR_lup = base_case_syd_RR_lup) %>%
+#             add_shock_RR_tb(RR_tb = RR_tb,
+#                       starts_with_chr_vec = c("SYD_BC_t0_prev","SYD_BC_tx_prev"))
+# 
+#                }
+# )
+```
+
+
+```{r}
+original_tb <- output_params_ls$sim_results_ls %>%
+  purrr::map_dfr(~tibble::tibble(Tx = .x$tx_prev_any_common_mental_disorder_p_tl %>% sum(),
+                                 T0 = .x$t0_prev_any_common_mental_disorder_p_tl %>% sum(),
+                                 Tx_pop = .x$tx_20250101_p_tl %>% sum())) %>%
+  dplyr::summarise_all(mean) %>%
+  t()
+comparisons_tb <- alt_results_ls %>% purrr::map_dfr(~ tibble::tibble(Springtides = .x$tx_prev_any_common_mental_disorder_p_tl %>% sum(),
+`Springtides plus base case shock` = .x$TX_PREV_ANY_COMMON_MENTAL_DISORDER_P_TL_S1_EXCESS %>% sum(),
+`Springtides plus background risk` = .x$SYD_BC_tx_prev_any_common_mental_disorder_p_tl %>% sum(),
+`Springtides plus base case shock plus background risk` = .x$SYD_BC_TX_PREV_ANY_COMMON_MENTAL_DISORDER_P_TL_S1_EXCESS %>% sum(),
+)
+                                    ) %>%
+  dplyr::summarise_all(mean) %>%
+  t()
+colnames(comparisons_tb) <- c("Prevalent population")
+
+
+```
+
+```{r}
+comparison_tb <- comparisons_tb %>%
+  tibble::as_tibble() %>%
+  dplyr::mutate(`Proportion of population` = .$`Prevalent population`/original_tb["Tx_pop",1]) %>%
+  dplyr::mutate(`Change from Springtides Baseline` = .$`Prevalent population`-original_tb["T0",1]) %>%
+  dplyr::mutate(`Annual QALY Difference (Springtides_Baseline)` = 121/365.25*0.21 * .$`Change from Springtides Baseline`) %>%
+  dplyr::mutate(`Implied health financing requriement` = .$`Annual QALY Difference (Springtides_Baseline)`*28033)
+
+write.csv(comparison_tb,
+          paste0(project_data_path_chr,"/comparisons_tb.csv"))
+  
 ```
 
 # RERUN FOR 15-24 PDF
