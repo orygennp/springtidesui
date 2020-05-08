@@ -27,7 +27,7 @@ params:
   sim_data_r4_path_chr: !r NA_character_
   sim_results_ls_path_chr: !r NA_character_
   stat_chr: Prevalence - Annual
-  title_chr: Springtides report
+  title_chr: "Scenario Anaysis: Impact on mental disorder prevalence due to COVID-19 Systemic Shock"
   ttime_dbl: !r NA_real_
   uncertainty_1_int: 0.025
   uncertainty_2_int: 0.975
@@ -151,10 +151,20 @@ add_alt_model_RR_tb <- function(res_tb,
                                                                                                      .x * RR_dbl)
                                                                                                    
                                                                                                    )) 
-                      
-                    
     })
-  female_cols_chr_vec <- paste0(new_pfx_chr,
+add_sum_col_tb(res_tb = res_tb,
+               target_cols_chr_vec = target_cols_chr_vec,
+               new_pfx_chr = new_pfx_chr,
+               fm_sum_cols_chr_vec = fm_sum_cols_chr_vec,
+               p_sum_col_chr_vec = p_sum_col_chr_vec)
+
+}
+add_sum_col_tb <- function(res_tb,
+                           target_cols_chr_vec,
+                           new_pfx_chr = "",
+                           fm_sum_cols_chr_vec,
+                           p_sum_col_chr_vec){
+    female_cols_chr_vec <- paste0(new_pfx_chr,
                                 target_cols_chr_vec["f_"==target_cols_chr_vec %>% stringr::str_sub(start=-4,end=-3)])
   male_cols_chr_vec <- paste0(new_pfx_chr,
                               target_cols_chr_vec["f_"==target_cols_chr_vec %>% stringr::str_sub(start=-4,end=-3)])
@@ -167,8 +177,7 @@ add_alt_model_RR_tb <- function(res_tb,
                     ~ .x %>%
     dplyr::mutate(!!rlang::sym(.y[[1]][1]) := dplyr::select(., .y[[2]]) %>% rowSums(na.rm = TRUE)))  %>%
     dplyr::mutate(!!rlang::sym(paste0(new_pfx_chr,p_sum_col_chr_vec)) := dplyr::select(.,fm_sum_cols_chr_vec) %>% rowSums(na.rm = TRUE))
-
-}
+                           }
 import_model_output_tb <- function(path_to_K10_data_chr,
                                    range_ls,
                                    start_date_dtm){
@@ -215,17 +224,13 @@ update_results_ls <- function(pa_x_params_ls_path_chr,
   pa_x_params_ls <- readRDS(pa_x_params_ls_path_chr)
   prev_params_dbl_vec <- purrr::map_dbl(epi_data_dtm_ls,
                                         ~ which.min(abs(youth_distress_tb$week_starting_dtm-.x)))
-  # prev_params_dbl_vec <- c(which.min(abs(youth_distress_tb$week_starting_dtm-lubridate::ymd_hms("2014-01-01 00:00:00", 
-#                                      tz = "Australia/Melbourne"))),
-#                        which.min(abs(youth_distress_tb$week_starting_dtm-lubridate::ymd_hms("2011-01-01 00:00:00", # 2007 not available
-#                                      tz = "Australia/Melbourne"))))
 prev_data_dbl_vec <- youth_distress_tb %>% 
   dplyr::slice(prev_params_dbl_vec) %>%
   dplyr::pull(Baseline)
 ti_col_chr_vec <- names(pa_x_params_ls$sim_results_ls[[1]])[names(pa_x_params_ls$sim_results_ls[[1]]) %>% startsWith("ti_")] %>% stringr::str_sub(end=-6) %>% unique()
-dates_nms_chr_vec <- c("t0_prev",
-                       #ti_col_chr_vec, ADD BACK IN WHEN PREVALENCE CALCULATED FOR i TIME POINTS
-                      "tx_prev")
+dates_nms_chr_vec <- c("t0_RR",
+                       #ti_col_chr_vec, paste(_RR) and ADD BACK IN WHEN PREVALENCE CALCULATED FOR i TIME POINTS
+                      "tx_RR")
 int_dtm_vec <- paste0(ti_col_chr_vec %>% stringr::str_sub(start=4, end=7),
        "-",
        ti_col_chr_vec %>% stringr::str_sub(start=8, end=9),
@@ -238,10 +243,6 @@ dates_idx_dbl_vec <- purrr::map_dbl(c(pa_x_params_ls$sim_data_r4@model_start_dat
                                     ~ which.min(abs(youth_distress_tb$week_starting_dtm-.x)))
 ## Add Interval Times
 RR_tb <- youth_distress_tb %>% dplyr::slice(dates_idx_dbl_vec)
-# t0_RR_tb <- RR_tb %>%
-#   dplyr::slice(1) 
-# tx_RR_tb <- RR_tb %>%
-#   dplyr::slice(2) 
 base_case_syd_RR_lup <- make_base_case_lup(pa_x_params_ls = pa_x_params_ls,
                                            dates_idx_dbl_vec = dates_idx_dbl_vec,
                                            dates_nms_chr_vec = dates_nms_chr_vec,
@@ -264,6 +265,37 @@ alt_results_ls <- pa_x_params_ls$sim_results_ls %>%
                }
 )
 }
+make_original_tb <- function(pa_x_params_ls_path_chr){
+  pa_x_params_ls <- readRDS(pa_x_params_ls_path_chr)
+pa_x_params_ls$sim_results_ls %>%
+  purrr::map_dfr(~tibble::tibble(Tx = .x$tx_prev_any_common_mental_disorder_p_tl %>% sum(),
+                                 T0 = .x$t0_prev_any_common_mental_disorder_p_tl %>% sum(),
+                                 Tx_pop = .x$tx_20250101_p_tl %>% sum())) %>%
+  dplyr::summarise_all(mean) %>%
+  t()
+}
+make_comparisons_tb <- function(results_ls){
+  comparisons_tb <- results_ls %>% purrr::map_dfr(~ tibble::tibble(`Base case` = .x$tx_prev_any_common_mental_disorder_p_tl %>% sum(),
+`Base case plus shock` = .x$TX_PREV_ANY_COMMON_MENTAL_DISORDER_P_TL_S1_EXCESS %>% sum(),
+`Base case plus background risk` = .x$SYD_BC_tx_prev_any_common_mental_disorder_p_tl %>% sum(),
+`Base case plus shock plus background risk` = .x$SYD_BC_TX_PREV_ANY_COMMON_MENTAL_DISORDER_P_TL_S1_EXCESS %>% sum(),
+)
+                                    ) %>%
+  dplyr::summarise_all(mean) %>%
+  t()
+colnames(comparisons_tb) <- c("Prevalent population")
+comparisons_tb  %>% as.data.frame() %>% tibble::rownames_to_column() %>%
+  dplyr::rename(Scenario = rowname)
+}
+update_comparisons_tb <- function(comparisons_tb,
+                                  original_tb){
+ comparisons_tb <- comparisons_tb %>%
+  #tibble::as_tibble() %>%
+  dplyr::mutate(`Proportion of population` = .$`Prevalent population`/original_tb["Tx_pop",1]) %>%
+  dplyr::mutate(`Change from Springtides Baseline` = .$`Prevalent population`-original_tb["T0",1]) %>%
+  dplyr::mutate(`Annual QALY Difference (Springtides_Baseline)` = 121/365.25*0.21 * .$`Change from Springtides Baseline`) %>%
+  dplyr::mutate(`Implied health financing requriement` = .$`Annual QALY Difference (Springtides_Baseline)`*28033*1.166) 
+                                  }
 ```
 
 ```{r echo=F, warning=F, message=F, eval=T}
@@ -272,6 +304,12 @@ project_data_path_chr <- r_data_path_chr %>% stringr::str_replace("R_Format","Pr
 path_to_K10_data_chr <- paste0(project_data_path_chr,"/Copy of Psychological Distress - North Coast outputs.xlsx")
 start_date_dtm <- lubridate::ymd_hms("2011-01-01 00:00:00", 
                                      tz = "Australia/Melbourne") 
+pa_dir_chr <- "Victoria_STE"
+pa_x_params_ls_path_chr <- paste0(project_data_path_chr,
+                                    "/",
+                                    pa_dir_chr,
+                                    "/output_params_ls.rds")
+output_params_ls <- readRDS(pa_x_params_ls_path_chr)
 ```
 
 
@@ -282,18 +320,6 @@ range_ls <- list(youth_distress_tb = "L3:U734",
 distress_tbs_ls <- import_model_output_tb(path_to_K10_data_chr = path_to_K10_data_chr,
                                           range_ls = range_ls,
                                           start_date_dtm = start_date_dtm)
-#   
-#   
-#   all_distress_tb <- readxl::read_xlsx(path_to_K10_data_chr,
-#                                      range = "A3:J734")
-# youth_distress_tb <- readxl::read_xlsx(path_to_K10_data_chr,
-#                                        range = "L3:U734")
-# youth_distress_tb <- youth_distress_tb %>%
-#   dplyr::mutate_at(dplyr::vars(dplyr::starts_with('Scen')), .funs = list(RR = ~(1+(.-Baseline)/Baseline))) %>%
-#   dplyr::mutate(week_starting_dtm = purrr::map_dbl(t,
-#                                                    ~ start_date_dtm + lubridate::weeks(.x)))
-# attributes(youth_distress_tb$week_starting_dtm) <- attributes(start_date_dtm)
-
 scenarios_tb <- readxl::read_excel(path_to_K10_data_chr,
                                    range = "W3:X9",
                                    col_names = F) %>%
@@ -304,264 +330,98 @@ scenarios_tb <- readxl::read_excel(path_to_K10_data_chr,
 
 ```{r echo=F, warning=F, message=F, eval=T}
 ## MAKE FN
-pa_dir_chr <- "North_Coast_PHN"
-pa_x_params_ls_path_chr <- paste0(project_data_path_chr,
-                                    "/",
-                                    pa_dir_chr,
-                                    "/output_params_ls.rds")
 epi_data_dtm_ls <- list(age_12_17 = lubridate::ymd_hms("2014-01-01 00:00:00", 
                                      tz = "Australia/Melbourne"),
                         age_18_25 = lubridate::ymd_hms("2011-01-01 00:00:00", # 2007 not available
                                      tz = "Australia/Melbourne"))
-
-new_alt_results_ls <- update_results_ls(pa_x_params_ls_path_chr = pa_x_params_ls_path_chr,
+alt_results_ls <- update_results_ls(pa_x_params_ls_path_chr = pa_x_params_ls_path_chr,
                                         youth_distress_tb = distress_tbs_ls$youth_distress_tb,
                                         epi_data_dtm_ls = epi_data_dtm_ls)
-# pa_x_params_ls <- readRDS(pa_x_params_ls_path_chr)
-# prev_params_dbl_vec <- c(which.min(abs(youth_distress_tb$week_starting_dtm-lubridate::ymd_hms("2014-01-01 00:00:00", 
-#                                      tz = "Australia/Melbourne"))),
-#                        which.min(abs(youth_distress_tb$week_starting_dtm-lubridate::ymd_hms("2011-01-01 00:00:00", # 2007 not available
-#                                      tz = "Australia/Melbourne"))))
-# prev_data_dbl_vec <- youth_distress_tb %>% 
-#   dplyr::slice(prev_params_dbl_vec) %>%
-#   dplyr::pull(Baseline)
-# ti_col_chr_vec <- names(pa_x_params_ls$sim_results_ls[[1]])[names(pa_x_params_ls$sim_results_ls[[1]]) %>% startsWith("ti_")] %>% stringr::str_sub(end=-6) %>% unique()
-# int_dtm_vec <- paste0(ti_col_chr_vec %>% stringr::str_sub(start=4, end=7),
-#        "-",
-#        ti_col_chr_vec %>% stringr::str_sub(start=8, end=9),
-#        "-",
-#        ti_col_chr_vec %>% stringr::str_sub(start=10, end=11)) %>%
-#   lubridate::ymd()
-# start_end_dbl_vec <- c(which.min(abs(youth_distress_tb$week_starting_dtm-pa_x_params_ls$sim_data_r4@model_start_date)),
-#                        which.min(abs(youth_distress_tb$week_starting_dtm-pa_x_params_ls$sim_data_r4@model_end_date)))
-# ## Add Interval Times
-# RR_tb <- youth_distress_tb %>% dplyr::slice(start_end_dbl_vec)
-# t0_RR_tb <- RR_tb %>%
-#   dplyr::slice(1) 
-# tx_RR_tb <- RR_tb %>%
-#   dplyr::slice(2) 
-# ## Make below a fn to do all intervening timepoints
-# base_case_syd_RR_lup <- tibble::tibble(age_dbl = pa_x_params_ls$age_lower:pa_x_params_ls$age_upper,
-#                                        t0_RR = purrr::map_dbl(age_dbl,
-#                                                               ~ ifelse(.x<18,
-#                                                                        1+(t0_RR_tb$Baseline-prev_data_dbl_vec[1])/prev_data_dbl_vec[1],
-#                                                                1+(t0_RR_tb$Baseline-prev_data_dbl_vec[2])/prev_data_dbl_vec[2]    )
-#                                                            
-#                                                                    
-#                                                                    ),
-#                                        tx_RR = purrr::map_dbl(age_dbl,
-#                                                               ~ ifelse(.x<18,
-#                                                                        1+(tx_RR_tb$Baseline-prev_data_dbl_vec[1])/prev_data_dbl_vec[1],
-#                                                                1+(tx_RR_tb$Baseline-prev_data_dbl_vec[2])/prev_data_dbl_vec[2])))
-# 
-# 
-# alt_results_ls <- pa_x_params_ls$sim_results_ls %>%
-#   purrr::map(~ {
-#     .x %>%
-#       add_shock_RR_tb(RR_tb = RR_tb,
-#                       starts_with_chr_vec = c("t0_prev","tx_prev")) %>%
-#     add_alt_model_RR_tb(col_pfx_chr = "t0_prev",
-#                           time_RR_chr = "t0_RR",
-#                           RR_lup = base_case_syd_RR_lup)  %>%
-#           add_alt_model_RR_tb(col_pfx_chr = "tx_prev",
-#                           time_RR_chr = "tx_RR",
-#                           RR_lup = base_case_syd_RR_lup) %>%
-#             add_shock_RR_tb(RR_tb = RR_tb,
-#                       starts_with_chr_vec = c("SYD_BC_t0_prev","SYD_BC_tx_prev"))
-# 
-#                }
-# )
 ```
 
 
-```{r}
-original_tb <- output_params_ls$sim_results_ls %>%
-  purrr::map_dfr(~tibble::tibble(Tx = .x$tx_prev_any_common_mental_disorder_p_tl %>% sum(),
-                                 T0 = .x$t0_prev_any_common_mental_disorder_p_tl %>% sum(),
-                                 Tx_pop = .x$tx_20250101_p_tl %>% sum())) %>%
-  dplyr::summarise_all(mean) %>%
-  t()
-comparisons_tb <- alt_results_ls %>% purrr::map_dfr(~ tibble::tibble(Springtides = .x$tx_prev_any_common_mental_disorder_p_tl %>% sum(),
-`Springtides plus base case shock` = .x$TX_PREV_ANY_COMMON_MENTAL_DISORDER_P_TL_S1_EXCESS %>% sum(),
-`Springtides plus background risk` = .x$SYD_BC_tx_prev_any_common_mental_disorder_p_tl %>% sum(),
-`Springtides plus base case shock plus background risk` = .x$SYD_BC_TX_PREV_ANY_COMMON_MENTAL_DISORDER_P_TL_S1_EXCESS %>% sum(),
-)
-                                    ) %>%
-  dplyr::summarise_all(mean) %>%
-  t()
-colnames(comparisons_tb) <- c("Prevalent population")
-
-
+```{r echo=F, warning=F, message=F, eval=T}
+original_tb <- make_original_tb(pa_x_params_ls_path_chr)
+comparisons_tb <- make_comparisons_tb(results_ls = alt_results_ls) %>%
+update_comparisons_tb(original_tb = original_tb)
 ```
 
-```{r}
-comparison_tb <- comparisons_tb %>%
-  tibble::as_tibble() %>%
-  dplyr::mutate(`Proportion of population` = .$`Prevalent population`/original_tb["Tx_pop",1]) %>%
-  dplyr::mutate(`Change from Springtides Baseline` = .$`Prevalent population`-original_tb["T0",1]) %>%
-  dplyr::mutate(`Annual QALY Difference (Springtides_Baseline)` = 121/365.25*0.21 * .$`Change from Springtides Baseline`) %>%
-  dplyr::mutate(`Implied health financing requriement` = .$`Annual QALY Difference (Springtides_Baseline)`*28033)
+```{r echo=F, warning=F, message=F, eval=T}
+comparisons_tb <- comparisons_tb %>%
+  dplyr::slice(1:2) %>%
+  dplyr::rename(`Prevalent population counts in 2024/2025`=`Prevalent population`,
+                `Prevalent population proportion in 2024/25`=`Proportion of population`,
+                `Change in prevalent population from 2020 Base case` = `Change from Springtides Baseline`,
+               `Change in annual QALYs from 2020 Base Case` = `Annual QALY Difference (Springtides_Baseline)`,
+               `Health system financing requirement to offset change` = `Implied health financing requriement`) %>%
+  t() %>% 
+  as.data.frame() %>% tibble::rownames_to_column()  
 
-write.csv(comparison_tb,
-          paste0(project_data_path_chr,"/comparisons_tb.csv"))
+  names(comparisons_tb ) <- c("Statistic", "Base case", "COVID shock")
+ comparisons_tb <- comparisons_tb [-1,] %>%
+    tibble::as_tibble() %>%
+    dplyr::mutate_at(.vars = c("Base case", "COVID shock"), .funs = as.character) %>%
+    dplyr::mutate_at(.vars = c("Base case", "COVID shock"), .funs = as.numeric) 
+
+
+    #dplyr::bind_rows(tibble::tibble(Statistic= ))
+#%>% janitor::row_to_names(1)
   
 ```
 
-# RERUN FOR 15-24 PDF
 
+```{r echo=F, warning=F, message=F, eval=T}
+ comparisons_tb <- dplyr::bind_rows(comparisons_tb[1:3,],
+                 tibble::tibble(Statistic = "COVID-19 excess prevalent counts in 2024/25",
+                                `Base case` = c(NA_real_),
+                                `COVID shock` = comparisons_tb[[1,3]]-comparisons_tb[[1,2]] 
+                 ))
+
+# write.csv(comparisons_tb,
+#           paste0(project_data_path_chr,"/comparisons_tb.csv"))
+  
+```
+
+```{r echo=F, warning=F, message=F, eval=T}
+comparisons_tb <- dplyr::bind_rows(comparisons_tb,
+                 tibble::tibble(Statistic = "Health utility impact (in QALYs) of excess prevalence in 2024/25",
+                                `Base case` = c(NA_real_),
+                                `COVID shock` = comparisons_tb[[4,3]]* 121/365.25*0.21
+                 ))
+
+```
+
+```{r echo=F, warning=F, message=F, eval=T}
+parts_1_3 <- comparisons_tb %>%
+  dplyr::mutate_at(.vars = c("Base case", "COVID shock"),
+                   ~ purrr::map_chr(.,
+                                          ~format(.x,decimal.mark=".",big.mark=",", small.interval=3)))
+part_2 <- comparisons_tb %>%
+  dplyr::filter(Statistic == "Prevalent population proportion in 2024/25") %>%
+    dplyr::mutate_at(.vars = c("Base case", "COVID shock"),
+                   ~ purrr::map_chr(.,
+                                          ~scales::percent(.x)))
+counterfactual_tb <-dplyr::bind_rows(parts_1_3[1,],
+                 part_2,
+                 parts_1_3[3:5,])
+```
+
+
+```{r echo=F, warning=F, message=F, eval=T}
+financing_req_chr <-paste0("$",(comparisons_tb[[5,3]]*28033*1.166) %>% format(decimal.mark=".",big.mark=",",small.mark=".", small.interval=3))
+```
 
 Not for citation or public dissemination. 
 
 # Introduction
-## Purpose
-This report summarises a set of predictions about the `r output_params_ls$tfd_stat_chr %>% tolower()` in young people aged between `r output_params_ls$age_lower` and `r output_params_ls$age_upper` for the `r output_params_ls$meso2_name_chr` between `r output_params_ls$tfd_start_date_chr` And `r output_params_ls$tfd_end_date_chr`. The document also describes some of the key features of the model used to generate these predictions, describes the level of uncertainty associated with the predictions and some of the strengths and limitations of the methods and data sources used in the predictive model.
+This document explores the potential impact of the significant social and economic disruption arising from COVID-19 on `r output_params_ls$tfd_stat_chr %>% tolower()` amongst `r output_params_ls$age_lower` to `r output_params_ls$age_upper` year olds resident in `r output_params_ls$meso2_name_chr` between  `r output_params_ls$tfd_start_date_chr` and `r output_params_ls$tfd_end_date_chr`.
 
-## About Springtides
-This report has been automatically generated by the development version of the Springtides App. The Springtides App provides a web based user interface to a computer simulation model of youth mental health epidemiology. The Springtides app and simulation model was developed by Orygen in the statistical software R using the readyforwhatsnext open source modelling framework. The source code for both Springtides and readyforwhatsnext is due for public release as R packages later in 2020. Currently, access to these code libraries is by invitation only as testing is currently ongoing. As this report is generated by the development version of the Springtides App, readers of this report are encouraged to cross reference report findings with other data sources and to report any suspected errors to the Springtides development team. 
+# Modelling Steps and Outputs
 
-# Methods
-## Data sources
-Currently, all input data used by the Springtides model are Australia specific. Most of the input data is freely available on the Internet and released under permissive licensing arrangements. `r ifelse(output_params_ls$format_chr=="HTML","Links to all such open data is included in the tables that summarise model inputs.","")`  Some input data were collated from reviews of relevant literature by the Springtides development team and collectively form part of the Springtides Replication Dataset. The replication dataset is currently stored in a private online data repository but is due for public release later in 2020.
-
-
-### Geometries
-The geometry data include data on the boundaries of a range of Australian spatial units (Table 1) `r ifelse(output_params_ls$meso2_type_chr=="HSS"," and point coordinates of service centre locations (Table 2)","")`. The boundary data source files are available for download direct from their publisher in the form of ESRI shape files.`r ifelse(output_params_ls$meso2_type_chr=="HSS"," The point coordinate data relate to the locations of headspace centres across Australia.","")` 
-
-
-```{r echo=F, warning=F, bootstrap.show.code = FALSE}
-output_params_ls$input_tables_ls$boundary_input_lup_tb
-```
-
-
-```{r echo=F, warning=F, bootstrap.show.code = FALSE}
-if(output_params_ls$input_ls$pa_r4@area_type=="HSS"){
-  output_params_ls$input_tables_ls$point_crd_input_kb
-}
-```
-
-\pagebreak
-
-### Spatial Attributes
-The sources for the spatial attribute data that were used to generate this report are summarised in Table `r length(output_params_ls$input_tables_ls)-1`. 
-
-
-```{r echo=F, warning=F, bootstrap.show.code = FALSE}
-output_params_ls$input_tables_ls$attributes_input_kb
-```
-
-The values of the epidemiology parameters in the Springtides Replication Dataset along with details about the relevant evidence sources are summarised in Table `r length(output_params_ls$input_tables_ls)`.
-
-```{r echo=F, warning=F}
-output_params_ls$input_tables_ls$epi_inputs_kb
-```
-## Algorithm
-The algorithm that produced the predictions in this report first `r ifelse(output_params_ls$pa_type_chr!="Predefined boundary","generated","retrieved")` the geometries that describe `r output_params_ls$meso2_name_chr`. To speed processing times, these geometries have been simplified to reduce the density of points in each shape, using an algorithm that preserves topology. These geometries are next synthesised with spatial attribute data that include census counts, population projections, the mean prediction errors for previous official population projections and age and sex `r output_params_ls$tfd_stat_rate_chr %>% tolower()` rates for `r output_params_ls$disorder_chr %>% stringr::str_replace_all("_"," ")`. As these attribute data are reported at different levels of spatial resolution, the geometry representing `r output_params_ls$meso2_name_chr` is divided into sub-units of varying sizes in order for the highest available resolution to be used for each attribute. Population counts and population projection data are used to predict the future resident population of `r output_params_ls$age_lower` to `r output_params_ls$age_upper` year olds by sex for each area sub-unit. These resident population predictions are then multiplied by age and sex based `r output_params_ls$tfd_stat_rate_chr %>% tolower()` rates to produce the `r output_params_ls$tfd_stat_rate_chr %>% tolower()` predictions, which are summed to produce a total prediction for `r output_params_ls$meso2_name_chr`. To account for uncertainty in population projections and `r output_params_ls$tfd_stat_rate_chr %>% tolower()` rate parameters, this process was repeated `r output_params_ls$n_its_int` times, each time drawing different values from the probability distributions of these parameters. The parameter uncertainty that is explored by this process relates to population growth rates and `r output_params_ls$tfd_stat_rate_chr %>% tolower()` rates. Structural uncertainty relating to geometry simplifcation, the assumed uniform distribution of counts at spatial resolutions greater than that for which reported data were available and the selection of data sources was not explored. 
-
-\pagebreak
-
-# Results
-
-## Demographic Results
-The predicted population of `r output_params_ls$age_lower` to `r output_params_ls$age_upper` year olds resident in `r output_params_ls$meso2_name_chr` is summarised in the following nine tables and nine figures.
-
-### `r paste0(output_params_ls$tfd_start_date_chr, " Resident Population ", ifelse(output_params_ls$y0_prediction_lgl,"Predictions","Estimates"))`
-
-
-```{r echo=F, warning=F}
-output_params_ls$output_tables_ls[[1]]
-```
-
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_1}
-
-output_params_ls$output_plots_ls$Figure_1
-
-
-```
-
-\pagebreak
-
-```{r echo=F, warning=F}
-output_params_ls$output_tables_ls[[2]]
-```
-
-
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_2}
-output_params_ls$output_plots_ls$Figure_2
-```
-
-
-\pagebreak
-
-```{r echo=F, warning=F}
-output_params_ls$output_tables_ls[[3]]
-```
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_3}
-output_params_ls$output_plots_ls$Figure_3
-```
-
-\pagebreak
-
-### `r paste0(output_params_ls$tfd_end_date_chr, " Resident Population Predictions")`
-
-```{r echo=F, warning=F}
- output_params_ls$output_tables_ls[[4]]
-```
-
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_4}
-output_params_ls$output_plots_ls$Figure_4
-```
-
-\pagebreak
-
-```{r echo=F, warning=F}
-output_params_ls$output_tables_ls[[5]]
-```
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_5}
-output_params_ls$output_plots_ls$Figure_5
-```
-
-\pagebreak
-
-```{r echo=F, warning=F}
-output_params_ls$output_tables_ls[[6]]
-```
-
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_6}
-output_params_ls$output_plots_ls$Figure_6
-```
-
-\pagebreak
+## Demographic Projections
+We first predicted the population of `r output_params_ls$age_lower` to `r output_params_ls$age_upper` year olds resident in `r output_params_ls$meso2_name_chr`. These predictions do not account for any potential COVID-19 disruptions to migration or mortality.
 
 ### `r paste0("Predicted Change in Resident Population Between ", output_params_ls$tfd_start_date_chr, " and ",output_params_ls$tfd_end_date_chr)`
-
-```{r echo=F, warning=F}
-output_params_ls$output_tables_ls[[7]]
-```
-
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_7}
-output_params_ls$output_plots_ls$Figure_7
-```
-
-
-\pagebreak
-
-```{r echo=F, warning=F}
-output_params_ls$output_tables_ls[[8]]
-```
-
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_8}
-output_params_ls$output_plots_ls$Figure_8
-```
-
-\pagebreak
 
 ```{r echo=F, warning=F}
 output_params_ls$output_tables_ls[[9]]
@@ -574,32 +434,8 @@ output_params_ls$output_plots_ls$Figure_9
 
 \pagebreak
 
-## `r output_params_ls$tfd_stat_chr` Results
-The predicted `r output_params_ls$tfd_stat_chr %>% tolower()` amongst `r output_params_ls$age_lower` to `r output_params_ls$age_upper` year olds resident in `r output_params_ls$meso2_name_chr` is summarised in the next nine tables and nine figures.
-
-### `r paste0(output_params_ls$tfd_start_date_chr," ",output_params_ls$tfd_stat_chr, " Predictions")`
-
-```{r echo=F, warning=F}
-output_params_ls$output_tables_ls[[10]]
-```
-
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_10}
-output_params_ls$output_plots_ls$Figure_10
-```
-
-\pagebreak
-
-```{r echo=F, warning=F}
-output_params_ls$output_tables_ls[[11]]
-```
-
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_11}
-output_params_ls$output_plots_ls$Figure_11
-```
-
-\pagebreak
+## `r output_params_ls$tfd_stat_chr` Base Case
+We next applied age and sex prevalence rates estimated from the most recent Australian surveys to predicted `r output_params_ls$tfd_stat_chr %>% tolower()` amongst `r output_params_ls$age_lower` to `r output_params_ls$age_upper` year olds resident in `r output_params_ls$meso2_name_chr`. These rates neither account for any potential change in the background prevalence of mental disorder since these surveys were undertaken, not for the potential impacts of the systemic shock arising from COVID-19.
 
 ```{r echo=F, warning=F}
 output_params_ls$output_tables_ls[[12]]
@@ -608,28 +444,6 @@ output_params_ls$output_tables_ls[[12]]
 
 ```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_12}
 output_params_ls$output_plots_ls$Figure_12
-```
-
-\pagebreak
-
-### `r paste0(output_params_ls$tfd_end_date_chr," ",output_params_ls$tfd_stat_chr, " Predictions")`
-
-```{r echo=F, warning=F}
-output_params_ls$output_tables_ls[[13]]
-```
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_13}
-output_params_ls$output_plots_ls$Figure_13
-```
-
-\pagebreak
-
-```{r echo=F, warning=F}
-output_params_ls$output_tables_ls[[14]]
-```
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_14}
-output_params_ls$output_plots_ls$Figure_14
 ```
 
 \pagebreak
@@ -648,28 +462,6 @@ output_params_ls$output_plots_ls$Figure_15
 ### `r paste0("Predicted Change in "," ",output_params_ls$tfd_stat_chr," Between ", output_params_ls$tfd_start_date_chr, " and ",output_params_ls$tfd_end_date_chr)`
 
 ```{r echo=F, warning=F}
-output_params_ls$output_tables_ls[[16]]
-```
-
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_16}
-output_params_ls$output_plots_ls$Figure_16
-```
-
-\pagebreak
-
-```{r echo=F, warning=F}
-output_params_ls$output_tables_ls[[17]]
-```
-
-
-```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_17}
-output_params_ls$output_plots_ls$Figure_17
-```
-
-\pagebreak
-
-```{r echo=F, warning=F}
 output_params_ls$output_tables_ls[[18]]
 ```
 
@@ -680,13 +472,16 @@ output_params_ls$output_plots_ls$Figure_18
 
 \pagebreak
 
-# Discussion
-The results presented in this report are produced by an algorithm that synthesises Australian geometry and spatial attribute data. Strengths of this automated approach include the relevance of the input data to the Australian context and using data at the highest available spatial resolution. However, there are also a number of limitations that users of this report should bear in mind when interpreting report results.
+## COVID-19 Counterfactual
+Finally, we modelled one counterfactual scenario - that of an increase in prevalence rates due to the COVID-19 systemic shock. This scenario did not explore any potential change in background prevalence between the conduct of national Australian epidemiological surveys that are the source of our base case prevalence rate data nor any demographic change (population size and composition) arising from the COVID-19 systemic shock.
 
-First and most importantly, this report is produced by a development version of the Springtides App, which means both the application and its underlying model are only partially verified and validated. An updated version of the Springtides App will be released once user testing, code and input data verification and validation checks have been completed. Secondly, uncertainty is only partially explored and the true uncertainty of model outputs will be greater than that described in this report. Some model inputs currently only have deterministic values, structural uncertainty is not yet explored and to conserve computing resources we have restricted Springtides App users to running a maximum of 100 iterations of each simulation. We will be shortly addressing each of these constraints in a forthcoming development release as well as providing opportunities to explore structural uncertainty through selection of alternative evidence sources for a number of model parameters. Thirdly, epidemiology estimates are currently based on age and sex predictors only. Area attributes such as urbanicity and socioeconomic status will be added to the predictors in a forthcoming development version release.  
+```{r echo=F, warning=F}
+counterfactual_tb
 
-# Contact
-You can help improve the Springtides App by reporting any suspected errors or providing usability feedback to the Springtides development team. Email: matthew.hamilton@orygen.org.au
+```
+
+To explore the cost of mitigating the population health utility loss under this scenario, we multiplied the projected Quality Adjusted Life Years (QALYs) lost by an empirical estimate of the marginal productivity of Australian healthcare expenditure in dollars per QALY. The estimated healthcare financing requirement to completely offset the projected health loss due to the COVID-19 systemic shock modelled under this scenario is `r financing_req_chr`.
+
 
 ```{r echo=F, warning=F}
 # if(output_params_ls$rendered_by_shiny_lgl)
