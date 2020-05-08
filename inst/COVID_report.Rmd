@@ -195,7 +195,7 @@ tb
     stats::setNames(names(range_ls))
 
 }
-make_base_case_lup <- function(pa_x_params_ls,
+make_bgd_RR_lup <- function(pa_x_params_ls,
                                dates_idx_dbl_vec, # Named
                                dates_nms_chr_vec,
                                RR_tb,
@@ -243,7 +243,7 @@ dates_idx_dbl_vec <- purrr::map_dbl(c(pa_x_params_ls$sim_data_r4@model_start_dat
                                     ~ which.min(abs(youth_distress_tb$week_starting_dtm-.x)))
 ## Add Interval Times
 RR_tb <- youth_distress_tb %>% dplyr::slice(dates_idx_dbl_vec)
-base_case_syd_RR_lup <- make_base_case_lup(pa_x_params_ls = pa_x_params_ls,
+base_case_syd_RR_lup <- make_bgd_RR_lup(pa_x_params_ls = pa_x_params_ls,
                                            dates_idx_dbl_vec = dates_idx_dbl_vec,
                                            dates_nms_chr_vec = dates_nms_chr_vec,
                                            RR_tb = RR_tb,

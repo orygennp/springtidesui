@@ -1,45 +1,23 @@
-add_shock_RR_tb <- function(res_tb,
-                            RR_tb,
-                            starts_with_chr_vec){
-  res_tb %>%
-    dplyr::mutate_at(dplyr::vars(dplyr::starts_with(starts_with_chr_vec[1])), #t0_prev
-                     .funs = list(s1_excess = ~ RR_tb %>%
-                                    dplyr::slice(1) %>% dplyr::pull(`Scenario 1_RR`)*.,
-                                  s2_excess = ~ RR_tb %>%
-                                    dplyr::slice(1) %>% dplyr::pull(`Scenario 2_RR`) *.,
-                                  s1_i1_excess = ~ RR_tb %>%
-                                    dplyr::slice(1) %>% dplyr::pull(`Scen. 1, int. 1_RR`) *.,
-                                  s1_i2_excess = ~ RR_tb %>%
-                                    dplyr::slice(1) %>% dplyr::pull(`Scen. 1, int. 2_RR`) *.,
-                                  s1_i3_excess = ~ RR_tb %>%
-                                    dplyr::slice(1) %>% dplyr::pull(`Scen. 1, int. 3_RR`) *.,
-                                  s1_i4_excess = ~ RR_tb %>%
-                                    dplyr::slice(1) %>% dplyr::pull(`Scen. 1, int. 4_RR`) *.,
-                                  s1_i5_excess = ~ RR_tb %>%
-                                    dplyr::slice(1) %>% dplyr::pull(`Scen. 1, int. 5_RR`) *.)
-
-    ) %>%
-    dplyr::mutate_at(dplyr::vars(dplyr::starts_with(starts_with_chr_vec[2])), #tx_prev
-                     .funs = list(s1_excess = ~ RR_tb %>%
-                                    dplyr::slice(2) %>% dplyr::pull(`Scenario 1_RR`)*.,
-                                  s2_excess = ~ RR_tb %>%
-                                    dplyr::slice(2) %>% dplyr::pull(`Scenario 2_RR`) *.,
-                                  s1_i1_excess = ~ RR_tb %>%
-                                    dplyr::slice(2) %>% dplyr::pull(`Scen. 1, int. 1_RR`) *.,
-                                  s1_i2_excess = ~ RR_tb %>%
-                                    dplyr::slice(2) %>% dplyr::pull(`Scen. 1, int. 2_RR`) *.,
-                                  s1_i3_excess = ~ RR_tb %>%
-                                    dplyr::slice(2) %>% dplyr::pull(`Scen. 1, int. 3_RR`) *.,
-                                  s1_i4_excess = ~ RR_tb %>%
-                                    dplyr::slice(2) %>% dplyr::pull(`Scen. 1, int. 4_RR`) *.,
-                                  s1_i5_excess = ~ RR_tb %>%
-                                    dplyr::slice(2) %>% dplyr::pull(`Scen. 1, int. 5_RR`) *.)
-
-    ) %>% dplyr::rename_at(
-      dplyr::vars(ends_with("_excess")), function(x) { toupper(x) }
-    )
-  }
-
+make_shock_RR_tb <- function(RR_tb,
+                             var_chr,
+                             dates_nms_chr_vec){
+  tb <- purrr::map2_dfc(1:nrow(RR_tb),
+                        dates_nms_chr_vec,
+                        ~ tibble::tibble(!!rlang::sym(.y) := (RR_tb %>%
+                                                                dplyr::slice(.x) %>%
+                                                                dplyr::pull(!!rlang::sym(var_chr))) /
+                                           RR_tb %>%
+                                           dplyr::slice(.x) %>%
+                                           dplyr::pull(Baseline) ##### CHECK THIS ##### !!!!!!!!!
+                        )) %>%
+    t() %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column("Dtm")
+  tb$Dtm <- tf_vars_to_dtm_vec(tb$Dtm,
+                                starts_dbl = 4,
+                                tz = "Australia/Melbourne")
+  tb
+}
 ## SPECIFY DATA PATHS
 r_data_path_chr <- "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format"
 project_data_path_chr <- r_data_path_chr %>% stringr::str_replace("R_Format","Project/COVID19")
@@ -56,7 +34,6 @@ scenarios_tb <- readxl::read_excel(path_to_K10_data_chr,
                                    col_names = F) %>%
   dplyr::rename(Scenario = ...1,
                 Description = ...2)
-
 ## IMPORT PRE-COVID SPRINGTIDES RUNS
 pa_x_params_ls_path_chr <- paste0(project_data_path_chr,
                                   "/",
@@ -99,28 +76,16 @@ dates_idx_dbl_vec <- purrr::map_dbl(dtm_vec,
                                     ~ which.min(abs(distress_tb$week_starting_dtm-.x)))
 ## Add Interval Times
 RR_tb <- distress_tb %>% dplyr::slice(dates_idx_dbl_vec)
-bgd_RR_lup <- make_base_case_lup(pa_x_params_ls = pa_x_params_ls,
+bgd_RR_lup <- make_bgd_RR_lup(pa_x_params_ls = pa_x_params_ls,
                                            dates_idx_dbl_vec = dates_idx_dbl_vec,
                                            dates_nms_chr_vec = dates_nms_chr_vec,
                                            RR_tb = RR_tb,
                                            prev_data_dbl_vec = prev_data_dbl_vec)
 
-alt_results_ls <- pa_x_params_ls$sim_results_ls %>%
-  purrr::map(~ {
-    .x %>%
-      add_shock_RR_tb(RR_tb = RR_tb,
-                      starts_with_chr_vec = c("t0_prev","tx_prev")) %>%
-      add_alt_model_RR_tb(col_pfx_chr = "t0_prev",
-                          time_RR_chr = "t0_RR",
-                          RR_lup = bgd_RR_lup)  %>%
-      add_alt_model_RR_tb(col_pfx_chr = "tx_prev",
-                          time_RR_chr = "tx_RR",
-                          RR_lup = bgd_RR_lup) %>%
-      add_shock_RR_tb(RR_tb = RR_tb,
-                      starts_with_chr_vec = c("SYD_BC_t0_prev","SYD_BC_tx_prev"))
-
-  }
-  )
+shock_RR_lup <- make_shock_RR_tb(RR_tb = RR_tb,
+                                 var_chr ="Scenario 1_RR",
+                                 dates_nms_chr_vec = dates_nms_chr_vec,
+                                 starts_with_chr_vec = )
 
 
 ####
