@@ -96,7 +96,7 @@ dates_nms_chr_vec <- get_var_pfx_chr_vec(sp_data_sf = sp_data_sf,
 dtm_vec <- tf_vars_to_dtm_vec(dates_nms_chr_vec,
                                   tz = "Australia/Melbourne")
 
-######## MAIN PURRR ######
+## Structural parameters
 par_str_tb <- purrr::reduce(1:length(distress_tbs_ls),
                             .init = pa_x_params_ls$input_ls$env_str_par_tb,
                             ~ {
@@ -111,12 +111,26 @@ par_str_tb <- purrr::reduce(1:length(distress_tbs_ls),
                               dates_idx_dbl_vec <- purrr::map_dbl(dtm_vec,
                                                                   ~ which.min(abs(distress_tb$week_starting_dtm-.x)))
                               RR_tb <- distress_tb %>% dplyr::slice(dates_idx_dbl_vec)
-                              names(epi_data_dtm_ls) %>%
-                                purrr::map_chr(~ paste0(.x %>% stringr::str_sub(end=4),
-                                                        .x %>% stringr::str_sub(start=5,end=6) %>%
-                                                          as.numeric() %>% max(age_range_chr_vec %>%
-                                                                                 stringr::str_sub(end=2) %>%
-                                                                                 as.numeric())))
+                              names_chr_vec <- purrr::map(age_range_chr_vec,
+                                                              ~ {
+                                                                age_range_chr <- .x
+                                                                names_chr_vec <- names(epi_data_dtm_ls) %>%
+                                                                  purrr::map_chr(~ paste0(.x %>% stringr::str_sub(end=4),
+                                                                                          .x %>% stringr::str_sub(start=5,end=6) %>%
+                                                                                            as.numeric() %>% max(age_range_chr %>%
+                                                                                                                   stringr::str_sub(end=2) %>%
+                                                                                                                   as.numeric()) %>%
+                                                                                            paste0(ifelse(.<10,"0",""),.),
+                                                                                          "_",
+                                                                                          .x %>% stringr::str_sub(start=8,end=9) %>%
+                                                                                            as.numeric() %>% min(age_range_chr %>%
+                                                                                                                   stringr::str_sub(start=4) %>%
+                                                                                                                   as.numeric()) %>%
+                                                                                            paste0(ifelse(.<10,"0",""),.)))
+                                                                names_chr_vec[purrr::map_lgl(names_chr_vec,
+                                                                                             ~ stringr::str_sub(.x,start=5,end=6)< stringr::str_sub(.x,start=8,end=9))]
+                                                              }) %>%
+                                unlist()
                               ### HERE
                               ### HERE
                               bgd_RR_lup <- make_bgd_RR_lup(pa_x_params_ls = pa_x_params_ls,
@@ -124,7 +138,7 @@ par_str_tb <- purrr::reduce(1:length(distress_tbs_ls),
                                                             dates_nms_chr_vec = dates_nms_chr_vec,
                                                             RR_tb = RR_tb,
                                                             prev_data_dbl_vec = prev_data_dbl_vec,
-                                                            age_range_chr_vec = names(epi_data_dtm_ls))
+                                                            age_range_chr_vec = names_chr_vec)
                               shock_RR_lup <- make_shock_RR_tb(RR_tb = RR_tb,
                                                                var_chr ="Scenario 1_RR",
                                                                dates_nms_chr_vec = dates_nms_chr_vec)
@@ -154,14 +168,11 @@ par_str_tb <- purrr::reduce(1:length(distress_tbs_ls),
                                                use_in = "base")
 
                             })
-
-
-
-
-### End Purrr
+## Paramater values
+new_it_nbr <- 20
 par_str_list <- instantiate_env_struc_par_all(par_str_tb)
 par_vals_tb  <- purrr::map_dfr(1:length(par_str_list),
-                                ~ genValueFromDist(par_str_list[[.x]], 10))
+                                ~ genValueFromDist(par_str_list[[.x]], new_it_nbr))
 param_tb <- par_vals_tb
 #pa_x_params_ls$sim_data_r4@st_envir@par_vals
 
