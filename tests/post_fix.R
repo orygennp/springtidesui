@@ -1,3 +1,5 @@
+library(ready4sim)
+library(ready4space)
 import_model_output_tb <- function(path_to_K10_data_chr,
                                    range_ls,
                                    start_date_dtm){
@@ -85,6 +87,11 @@ update_par_vals_tb <- function(sp_data_sf,
   dtm_vec <- tf_vars_to_dtm_vec(dates_nms_chr_vec,
                                 tz = "Australia/Melbourne")
   ## Structural parameters
+  ## NEED TO :
+  ## A) SET SEED
+  ## B) BREAK PAR VALs GENERATION INTO TWO PARTS:
+  ##    - Deterministic (Var_1) [Ensure pe_sign ==0]
+  ##    - Probablistic (Var_2:n)
   purrr::reduce(1:length(distress_tbs_ls),
                 .init = pa_x_params_ls$input_ls$env_str_par_tb,
                 ~ {
@@ -163,7 +170,7 @@ run_scenarios <- function(sp_data_sf,
                           pa_x_params_ls,
                           epi_data_dtm_ls,
                           scenarios_ls,
-                          new_it_nbr,
+                          n_its_dbl,
                           save_path_chr)
   purrr::walk(1:length(scenarios_ls),
               ~ {
@@ -175,22 +182,20 @@ run_scenarios <- function(sp_data_sf,
                                                  bgd_rr_is_one_lgl = scenarios_ls[[.x]][1],
                                                  shock_rr_is_one_lgl = scenarios_ls[[.x]][2])
                 ## Paramater values
-                new_it_nbr <- new_it_nbr
-                par_str_list <- instantiate_env_struc_par_all(par_str_tb)
-                par_vals_tb  <- purrr::map_dfr(1:length(par_str_list),
-                                               ~ genValueFromDist(par_str_list[[.x]], new_it_nbr))
-                par_df <- par_vals_tb %>% as.data.frame()
-                par_df[1,2:(new_it_nbr+1)] <- purrr::map_dbl(1:new_it_nbr,~ifelse(runif(1) < 0.5, -1, 1)) ########## VERY IMPORTANT : MUST IMPLEMENT GENERALLY ####
-                par_vals_tb <- par_df %>% tibble::as_tibble()
+                n_its_dbl <- n_its_dbl
+                par_str_list <- ready4sim::instantiate_env_struc_par_all(par_str_tb)
+
+                par_vals_tb  <-  make_par_vals_tb(par_str_ls = par_str_list, ## ready4sim::
+                                                  n_its_dbl = n_its_dbl)
                 new_sim_data_r4 <- pa_x_params_ls$sim_data_r4
                 new_sim_data_r4@st_envir@par_vals <- par_vals_tb
-                new_sim_results <- runSimulation(x = new_sim_data_r4,
-                                                 n_its_int = new_it_nbr,
+                new_sim_results <- ready4sim::runSimulation(x = new_sim_data_r4,
+                                                 n_its_int = n_its_dbl,
                                                  group_by = pa_x_params_ls$input_ls$grouping_for_sim,
                                                  inc_ti_lgl = T)
                 ## Save results
-                saveRDS(new_sim_results,paste0(save_path_chr,"/new_sim_res_",names(scenarios_ls)[.x],".RDS"))
-                saveRDS(par_vals_tb,paste0(save_path_chr,"/new_par_vals_tb_",names(scenarios_ls)[.x],".RDS"))
+                saveRDS(new_sim_results,paste0(save_path_chr,"/sim_res_",names(scenarios_ls)[.x],".RDS"))
+                saveRDS(par_vals_tb,paste0(save_path_chr,"/par_vals_tb_",names(scenarios_ls)[.x],".RDS"))
 
               })
 
@@ -235,16 +240,25 @@ basic_cols_chr_vec <- names(sp_data_sf)[names(sp_data_sf) %>% startsWith(c("pop"
 sp_data_sf <- sp_data_sf %>%
   dplyr::select(tidyselect::all_of(basic_cols_chr_vec))
 ### UPDATE_PARAMS_LS
-pa_x_params_ls <- output_params_ls
+#pa_x_params_ls <- output_params_ls
 ## MAIN RUN
+n_its_dbl <- 100
 run_scenarios(sp_data_sf = sp_data_sf,
               distress_tbs_ls = distress_tbs_ls,
               distress_ages_ls = distress_ages_ls,
-              pa_x_params_ls = pa_x_params_ls,
+              pa_x_params_ls = output_params_ls,
               epi_data_dtm_ls = epi_data_dtm_ls,
               scenarios_ls = list(bc = c(F,F),
                                   shock_only = c(F,T),
                                   bgd_only = c(T,F),
-                                  both_cfs = c(T,T)),
-              new_it_nbr = 2,
-              save_path_chr = "I://Research//Partnership Grant Study//4. AIM 3 ( Economic Analyses and Fidelity)//COVID//Victoria_STE")
+                                  both_cfs = c(T,T)
+                                  ),
+              n_its_dbl = n_its_dbl,
+              save_path_chr = project_data_path_chr
+                #"I://Research//Partnership Grant Study//4. AIM 3 ( Economic Analyses and Fidelity)//COVID//Victoria_STE"
+              )
+input_ls <- output_params_ls$input_ls
+input_ls$n_its_int <- n_its_dbl
+sim_data_r4 <- output_params_ls$sim_data_r4
+saveRDS(input_ls,paste0(project_data_path_chr,"/input_ls.RDS"))
+saveRDS(sim_data_r4,paste0(project_data_path_chr,"/sim_data_r4.RDS"))

@@ -1,0 +1,624 @@
+---
+params:
+  age_lower: !r NA_real_
+  age_upper: !r NA_real_
+  authorship_1_chr: ''
+  authorship_2_chr: ''
+  data_pckg_chr: springtides
+  disorder_chr: !r NA_character_
+  format_chr: HTML
+  gdist_dbl: !r NA_real_
+  gdist_ttime_chr: !r NA_character_
+  input_ls_path_chr: !r NA_character_
+  meso2_bound_yr: !r NA_real_
+  meso2_chr: !r NA_character_
+  meso2_name_chr: !r NA_character_
+  meso2_type_chr: !r NA_character_
+  micro_chr_vec: !r NA_character_
+  model_end_date: !r Sys.Date()
+  model_start_date: !r springtides::aus_pa_r4@temporal_min
+  n_its_int: !r NA_real_
+  output_params_ls_path_chr: !r NA_character_
+  pa_r4_chr: aus_pa_r4
+  pa_type_chr: !r NA_character_
+  pdf_output_lgl: !r F
+  r_data_dir_chr: data
+  rendered_by_shiny_lgl: !r F
+  sim_data_r4_path_chr: !r NA_character_
+  sim_results_ls_path_chr: !r NA_character_
+  stat_chr: Prevalence - Annual
+  title_chr: "Scenario Anaysis: Impact on mental disorder prevalence due to COVID-19 Systemic Shock"
+  ttime_dbl: !r NA_real_
+  uncertainty_1_int: 0.025
+  uncertainty_2_int: 0.975
+  user_name_chr: !r NA_character_
+title: "`r params$title_chr`"
+author:
+  - "`r params$authorship_1_chr`"
+  - "`r params$authorship_2_chr`"
+date: "`r format.Date(Sys.Date(),'%B %d, %Y')`"
+output:
+  html_document:
+    df_print: paged
+  pdf_document:
+    fig_caption: yes
+  word_document: default
+header-includes:
+- \usepackage{booktabs}
+- \usepackage{longtable}
+- \usepackage{array}
+- \usepackage{multirow}
+- \usepackage{wrapfig}
+- \usepackage{float}
+- \usepackage{colortbl}
+- \usepackage{pdflscape}
+- \usepackage{tabu}
+- \usepackage{threeparttable}
+- \usepackage{threeparttablex}
+- \usepackage[normalem]{ulem}
+- \usepackage{makecell}
+- \usepackage{xcolor}
+---
+
+```{r echo=F, warning=F, message=F, eval=T}
+library(magrittr)
+library(kableExtra)
+library(springtides)
+library(ready4sim)
+r_data_path_chr <- "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format"
+project_data_path_chr <- r_data_path_chr %>% stringr::str_replace("R_Format","Project/COVID19")
+
+```
+
+```{r}
+# make_slim_out_tables_ls <- function(input_ls,
+#                                   sim_results_ls,
+#                                   output_tbs_titles_ls,
+#                                   format_chr = "HTML"){
+#   composite_results_ls <- list(input_parameters_ls = input_ls,
+#                                epi_results_tbs_ls = make_epi_results_tbs_ls(sim_results_ls = sim_results_ls,
+#                                                                             input_ls = input_ls))
+#   purrr::pmap(list(rep(c("Female","Male","Total"),6),
+#               c(rep(c("t0_res_pop_tb"),3),rep(c("tx_res_pop_tb"),3),rep(c("dl_res_pop_tb"),3),rep(c("t0_prev_pop_tb"),3),rep(c("tx_prev_pop_tb"),3),rep(c("dl_prev_pop_tb"),3)),
+#               output_tbs_titles_ls %>% purrr::flatten_chr()),
+#               ~ make_summary_pop_tb(sim_results = composite_results_ls,
+#                                     table_type = ..1,
+#                                     table_to_sum = ..2,
+#                                     format_chr = format_chr,
+#                                     caption_chr = ..3)) %>%
+#     stats::setNames(names(output_tbs_titles_ls))
+# }
+# make_slim_out_plots_ls <- function(sim_results_ls,
+#                              sim_data_r4,
+#                              input_ls,
+#                              land_area_type_chr,
+#                              deter_indx_dbl = 1){
+#   land_sf <- ready4space::get_data(input_ls$pa_r4@lookup_tb@sp_data_pack_lup,
+#                                    col_chr = "area_type",
+#                                    value_chr = land_area_type_chr)
+#   aus_pl <- ready4plot::plot_land(land_boundary_sf = land_sf,
+#                                   feature_var_chr = NA_character_,
+#                                   feature_val_chr_vec = NA_character_,
+#                                   zoom_to_feature_lgl = F)
+#   names_sf_chr <- names(sim_data_r4@st_envir@st_data$profiled_sf)
+#   names_sf_chr <- names_sf_chr[!startsWith(names_sf_chr,"inc_UNIT_ID")&!startsWith(names_sf_chr,"whl_UNIT_ID")]
+#   popl_sf <-   sim_data_r4@st_envir@st_data$profiled_sf %>% dplyr::select(tidyselect::all_of(names_sf_chr)) %>%
+#     dplyr::inner_join(sim_results_ls[[deter_indx_dbl]][[2]])
+#   demog_0_stub_chr <- sim_data_r4@model_start_date %>%
+#     as.character() %>%
+#     stringr::str_sub(end=10) %>%
+#     stringr::str_replace_all("-","")
+#   demog_x_stub_chr <- sim_data_r4@model_end_date %>%
+#     as.character() %>%
+#     stringr::str_sub(end=10) %>%
+#     stringr::str_replace_all("-","")
+#   output_plots_ls <- make_plots_on_land_ls(profiled_sf = popl_sf,
+#                                            land_pl = aus_pl,
+#                                            plot_names_vec = paste0("Figure_",1:18),#c("erp_t0_plot","erp_tx_plot","erp_dl_plot","prev_t0_plot","prev_tx_plot","prev_dl_plot")
+#                                            col_names_chr_vec = c(paste0("t0_",
+#                                                                         demog_0_stub_chr,
+#                                                                         "_",
+#                                                                         c("f","m","p"),
+#                                                                         "_tl"),
+#                                                                  paste0("tx_",
+#                                                                         demog_x_stub_chr,
+#                                                                         "_",
+#                                                                         c("f","m","p"),
+#                                                                         "_tl"),
+#                                                                  paste0("delta_",
+#                                                                         demog_x_stub_chr,
+#                                                                         "_",
+#                                                                         c("f","m","p"),
+#                                                                         "_tl"),
+#                                                                  paste0("t0_",
+#                                                                         demog_0_stub_chr,
+#                                                                         "_",
+#                                                                         "prev_",
+#                                                                         tolower(input_ls$disorder),
+#                                                                         "_",
+#                                                                         c("f","m","p"),
+#                                                                         "_tl"),
+#                                                                  paste0("tx_",
+#                                                                         demog_x_stub_chr,
+#                                                                         "_",
+#                                                                         "prev_",
+#                                                                         tolower(input_ls$disorder),
+#                                                                         "_",
+#                                                                         c("f","m","p"),
+#                                                                         "_tl"),
+#                                                                  paste0("delta_",
+#                                                                         demog_x_stub_chr,
+#                                                                         "_",
+#                                                                         "prev_",
+#                                                                         tolower(input_ls$disorder),
+#                                                                         "_",
+#                                                                         c("f","m","p"),
+#                                                                         "_tl")),
+#                                            plot_legend_chr_vec = rep(paste0(c("Females","Males","Persons"),
+#                                                                             ifelse(!input_ls$pa_r4@use_coord_lup,
+#                                                                                    " per square KM","")),
+#                                                                      6),
+#                                            make_density_lgl_vec = rep(!input_ls$pa_r4@use_coord_lup,18),
+#                                            make_discrete_lgl_vec = rep(!input_ls$pa_r4@use_coord_lup,18),
+#                                            diverge_lgl_vec = c(rep(F,6),rep(T,3),rep(F,6),rep(T,3)),
+#                                            bands_lgl = (input_ls$pa_r4@use_coord_lup | nrow(popl_sf) > 200),
+#                                            input_ls = input_ls)
+#   if(input_ls$pa_r4@use_coord_lup){
+#     output_plots_ls <- add_sites_to_pl_ls(input_ls = input_ls, land_pl_ls = output_plots_ls)
+#   }
+#   return(output_plots_ls)
+# }
+# make_slim_out_ls <- function(input_params_ls){
+#  if(!is.na(input_params_ls$data_pckg_chr)){
+#     data_pckg_chr <- input_params_ls$data_pckg_chr
+#   }else{
+#     data_pckg_chr <- NULL
+#   }
+#   data(list = input_params_ls$pa_r4_chr,
+#        package = data_pckg_chr,
+#        envir = environment())
+#   eval(parse(text = paste0("pa_r4<-",input_params_ls$pa_r4_chr)))
+#   options(scipen=999)
+#   if(input_params_ls$rendered_by_shiny_lgl)
+#     shiny::setProgress(0.1, message = "Step one: Processing user inputs")
+#   if(is.na(input_params_ls$meso2_type_chr)){
+#     meso2_type_chr <- NULL
+#   }else{
+#     meso2_type_chr <- input_params_ls$meso2_type_chr
+#   }
+#   if(is.na(input_params_ls$meso2_bound_yr)){
+#     meso2_bound_yr <- NULL
+#   }else{
+#     meso2_bound_yr <- input_params_ls$meso2_bound_yr
+#   }
+#   disorder_chr <- input_params_ls$disorder_chr
+#     if(is.na(input_params_ls$input_ls_path_chr)){
+#     input_ls <- make_one_input_ls(pa_r4 = pa_r4,
+#                                                path_to_data_chr = input_params_ls$r_data_dir_chr,
+#                                                args_ls = list(age_range_int_vec = c(input_params_ls$age_lower,input_params_ls$age_upper),
+#                                                               disorder_chr = input_params_ls$disorder_chr %>%
+#                                                                 stringr::str_replace_all(" ","_"),
+#                                                               gdist_ttime_chr = input_params_ls$gdist_ttime_chr,
+#                                                               gdist_dbl = input_params_ls$gdist_dbl,
+#                                                               meso1_chr = NA_character_,
+#                                                               meso2_bound_yr = meso2_bound_yr,
+#                                                               meso2_type_chr = meso2_type_chr,
+#                                                               meso2_chr = input_params_ls$meso2_chr,
+#                                                               micro_chr_vec = input_params_ls$micro_chr_vec,
+#                                                               model_end_ymdhms = input_params_ls$model_end_date,
+#                                                               model_start_ymdhms = input_params_ls$model_start_date,
+#                                                               n_its_int = input_params_ls$n_its_int,
+#                                                               pa_type_chr = input_params_ls$pa_type_chr,
+#                                                               prob_lgl = input_params_ls$n_its_int>1,
+#                                                               stat_chr = input_params_ls$stat_chr,
+#                                                               ttime_dbl = input_params_ls$ttime_dbl,
+#                                                               # n_custom_services_int = n_custom_services_int,
+#                                                               # custom_lat_dbl = get_lat_or_lon_dbl_vec(custom_coords_ls = custom_coords_ls),
+#                                                               # custom_lon_dbl = get_lat_or_lon_dbl_vec(custom_coords_ls = custom_coords_ls,
+#                                                               #                                         get_lat = F),
+#                                                               uncertainty_int = c(input_params_ls$uncertainty_1_int, input_params_ls$uncertainty_2_int)))
+#   }else{
+#     input_ls <- readRDS(input_params_ls$input_ls_path_chr)
+#   }
+#   if(input_params_ls$rendered_by_shiny_lgl)
+#     shiny::setProgress(0.2, message = "Step two: Processing geometries (this is usually the longest step)")
+#   if(is.na(input_params_ls$sim_data_r4_path_chr)){
+#     sim_data_r4 <- ready4sim::make_sim_data_env(input_ls = input_ls)
+#   }else{
+#     sim_data_r4 <- readRDS(input_params_ls$sim_data_r4_path_chr)
+#   }
+#   if(is.na(input_params_ls$sim_results_ls_path_chr)){
+#     sim_results_ls <- ready4sim::runSimulation(x = sim_data_r4,
+#                                                n_its_int = input_ls$n_its_int,
+#                                                group_by = input_ls$grouping_for_sim)
+#   }else{
+#     sim_results_ls <- readRDS(input_params_ls$sim_results_ls_path_chr)
+#   }
+# end_year_dbl <- sim_data_r4@model_end_date %>% lubridate::year()
+# n_its_int <- input_ls$n_its_int
+# start_year_dbl <- sim_data_r4@model_start_date %>% lubridate::year()
+# disorder_chr = input_ls$disorder %>%
+#                                 stringr::str_replace_all(" ","_")
+# tfd_stat_chr <- tf_stat_chr(stat_chr = input_params_ls$stat_chr, disorder_chr = disorder_chr)
+# tfd_stat_rate_chr <- tf_stat_chr(stat_chr = input_params_ls$stat_chr,disorder_chr = disorder_chr,output_chr = "rate")
+# tfd_end_date_chr <- sim_data_r4@model_end_date %>% format("%d %B %Y")
+# tfd_start_date_chr <- sim_data_r4@model_start_date %>% format("%d %B %Y")
+# if(input_params_ls$format_chr == "PDF")
+#   options(knitr.table.format = "latex")
+#   input_tables_ls <- make_aus_input_tables_ls(input_ls = input_ls,
+#                                               sim_data_r4 = sim_data_r4,
+#                                               stat_chr = input_params_ls$stat_chr,
+#                                               format_chr = input_params_ls$format_chr)
+#   y0_prediction_lgl <- get_prediction_lgl(sim_data_r4 = sim_data_r4,
+#                                                        input_ls = input_ls)
+#   output_plots_titles_ls <- make_output_titles_ls(output_chr = "Figure",
+#                                                                nbr_dbl_vec = 1:18,
+#                                                                area_name_chr = input_params_ls$meso2_name_chr,
+#                                                                date_chr_vec = c(tfd_start_date_chr,
+#                                                                                 tfd_end_date_chr),
+#                                                                y0_prediction_lgl = y0_prediction_lgl,
+#                                                                stat_chr = input_params_ls$stat_chr,
+#                                                                disorder_chr = disorder_chr,
+#                                                                age_range_dbl_vec = c(input_params_ls$age_lower,input_params_ls$age_upper),
+#                                                                number_lgl = ifelse(input_params_ls$format_chr=="PDF",F,T))
+#   output_tbs_titles_ls <- make_output_titles_ls(output_chr = "Table",
+#                                                 nbr_dbl_vec = 1:18 + length(input_tables_ls),
+#                                                 area_name_chr = input_params_ls$meso2_name_chr,
+#                                                 date_chr_vec = c(tfd_start_date_chr,
+#                                                                  tfd_end_date_chr),
+#                                                 y0_prediction_lgl = y0_prediction_lgl ,
+#                                                 stat_chr = input_params_ls$stat_chr,
+#                                                 disorder_chr = disorder_chr,
+#                                                 age_range_dbl_vec = c(input_params_ls$age_lower,input_params_ls$age_upper),
+#                                                 number_lgl = ifelse(input_params_ls$format_chr=="PDF",F,T))#!pdf_output_lgl)
+#   output_tables_ls <- make_slim_out_tables_ls(input_ls = input_ls,
+#                                                          sim_results_ls = sim_results_ls,
+#                                                          output_tbs_titles_ls = output_tbs_titles_ls,
+#                                                          format_chr = input_params_ls$format_chr)
+#   output_plots_ls <- make_slim_out_plots_ls(sim_results_ls = sim_results_ls,
+#                                           sim_data_r4 = sim_data_r4,
+#                                           input_ls = input_ls,
+#                                           land_area_type_chr = "STE")
+#   return(list(age_lower = input_params_ls$age_lower,
+#               age_upper = input_params_ls$age_upper,
+#               authorship_1_chr = input_params_ls$authorship_1_chr,
+#               authorship_2_chr = input_params_ls$authorship_2_chr,
+#               disorder_chr = disorder_chr,
+#               format_chr = input_params_ls$format_chr,
+#               input_ls = input_ls,
+#               input_tables_ls = input_tables_ls,
+#               meso2_name_chr = input_params_ls$meso2_name_chr,
+#               meso2_type_chr = meso2_type_chr,
+#               n_its_int = n_its_int,
+#               output_plots_ls = output_plots_ls,
+#               output_plots_titles_ls = output_plots_titles_ls,
+#               output_tables_ls = output_tables_ls,
+#               pa_type_chr = input_params_ls$pa_type_chr,
+#               rendered_by_shiny_lgl = input_params_ls$rendered_by_shiny_lgl,
+#               sim_data_r4 = sim_data_r4,
+#               sim_results_ls = sim_results_ls,
+#               start_year_dbl = start_year_dbl,
+#               tfd_stat_chr = tfd_stat_chr,
+#               tfd_stat_rate_chr = tfd_stat_rate_chr,
+#               tfd_end_date_chr = tfd_end_date_chr,
+#               tfd_start_date_chr = tfd_start_date_chr,
+#               format_chr = input_params_ls$format_chr,
+#               y0_prediction_lgl = y0_prediction_lgl))
+# }
+```
+
+
+```{r include=FALSE}
+# bc_res_ls <- readRDS(paste0(project_data_path_chr,"/sim_res_bc.RDS"))
+
+# sim_data_r4 <- readRDS(paste0(project_data_path_chr,"/sim_data_r4.RDS"))
+# sim_results_ls <- bc_res_ls
+input_params_ls <- params
+input_ls <- readRDS(paste0(project_data_path_chr,"/input_ls.RDS"))
+#bc_res_ls[[1]][[2]] %>% nrow()
+```
+
+```{r include=FALSE}
+input_params_ls$sim_results_ls_path_chr <- paste0(project_data_path_chr,"/sim_res_bc.RDS")
+input_params_ls$sim_data_r4_path_chr <- paste0(project_data_path_chr,"/sim_data_r4.RDS")
+input_params_ls$input_ls_path_chr <- paste0(project_data_path_chr,"/input_ls.RDS")
+input_params_ls$age_lower <- input_ls$age_lower
+input_params_ls$age_upper <- input_ls$age_upper
+input_params_ls$meso2_name_chr <- input_ls$pa_r4@features
+input_params_ls$disorder_chr <- input_ls$disorder
+```
+
+```{r include=FALSE}
+output_params_ls <- make_slim_out_ls(input_params_ls)
+
+```
+
+```{r include=FALSE}
+input_params_ls$sim_results_ls_path_chr <- paste0(project_data_path_chr,"/sim_res_shock_only.RDS")
+shock_output_params_ls <- make_slim_out_ls(input_params_ls)
+```
+
+Not for citation or public dissemination. 
+
+# Introduction
+## Purpose
+This report summarises a set of predictions about the `r output_params_ls$tfd_stat_chr %>% tolower()` in young people aged between `r output_params_ls$age_lower` and `r output_params_ls$age_upper` for the `r output_params_ls$meso2_name_chr` between `r output_params_ls$tfd_start_date_chr` And `r output_params_ls$tfd_end_date_chr`. The document also describes some of the key features of the model used to generate these predictions, describes the level of uncertainty associated with the predictions and some of the strengths and limitations of the methods and data sources used in the predictive model.
+
+## About Springtides
+This report has been automatically generated by the development version of the Springtides App. The Springtides App provides a web based user interface to a computer simulation model of youth mental health epidemiology. The Springtides app and simulation model was developed by Orygen in the statistical software R using the readyforwhatsnext open source modelling framework. The source code for both Springtides and readyforwhatsnext is due for public release as R packages later in 2020. Currently, access to these code libraries is by invitation only as testing is currently ongoing. As this report is generated by the development version of the Springtides App, readers of this report are encouraged to cross reference report findings with other data sources and to report any suspected errors to the Springtides development team. 
+
+# Methods
+## Data sources
+Currently, all input data used by the Springtides model are Australia specific. Most of the input data is freely available on the Internet and released under permissive licensing arrangements. `r ifelse(output_params_ls$format_chr=="HTML","Links to all such open data is included in the tables that summarise model inputs.","")`  Some input data were collated from reviews of relevant literature by the Springtides development team and collectively form part of the Springtides Replication Dataset. The replication dataset is currently stored in a private online data repository but is due for public release later in 2020.
+
+
+### Geometries
+The geometry data include data on the boundaries of a range of Australian spatial units (Table 1) `r ifelse(output_params_ls$meso2_type_chr=="HSS"," and point coordinates of service centre locations (Table 2)","")`. The boundary data source files are available for download direct from their publisher in the form of ESRI shape files.`r ifelse(output_params_ls$meso2_type_chr=="HSS"," The point coordinate data relate to the locations of headspace centres across Australia.","")` 
+
+
+```{r echo=F, warning=F, bootstrap.show.code = FALSE}
+output_params_ls$input_tables_ls$boundary_input_lup_tb
+```
+
+
+```{r echo=F, warning=F, bootstrap.show.code = FALSE}
+if(output_params_ls$input_ls$pa_r4@area_type=="HSS"){
+  output_params_ls$input_tables_ls$point_crd_input_kb
+}
+```
+
+\pagebreak
+
+### Spatial Attributes
+The sources for the spatial attribute data that were used to generate this report are summarised in Table `r length(output_params_ls$input_tables_ls)-1`. 
+
+
+```{r echo=F, warning=F, bootstrap.show.code = FALSE}
+output_params_ls$input_tables_ls$attributes_input_kb
+```
+
+The values of the epidemiology parameters in the Springtides Replication Dataset along with details about the relevant evidence sources are summarised in Table `r length(output_params_ls$input_tables_ls)`.
+
+```{r echo=F, warning=F}
+output_params_ls$input_tables_ls$epi_inputs_kb
+```
+## Algorithm
+The algorithm that produced the predictions in this report first `r ifelse(output_params_ls$pa_type_chr!="Predefined boundary","generated","retrieved")` the geometries that describe `r output_params_ls$meso2_name_chr`. To speed processing times, these geometries have been simplified to reduce the density of points in each shape, using an algorithm that preserves topology. These geometries are next synthesised with spatial attribute data that include census counts, population projections, the mean prediction errors for previous official population projections and age and sex `r output_params_ls$tfd_stat_rate_chr %>% tolower()` rates for `r output_params_ls$disorder_chr %>% stringr::str_replace_all("_"," ")`. As these attribute data are reported at different levels of spatial resolution, the geometry representing `r output_params_ls$meso2_name_chr` is divided into sub-units of varying sizes in order for the highest available resolution to be used for each attribute. Population counts and population projection data are used to predict the future resident population of `r output_params_ls$age_lower` to `r output_params_ls$age_upper` year olds by sex for each area sub-unit. These resident population predictions are then multiplied by age and sex based `r output_params_ls$tfd_stat_rate_chr %>% tolower()` rates to produce the `r output_params_ls$tfd_stat_rate_chr %>% tolower()` predictions, which are summed to produce a total prediction for `r output_params_ls$meso2_name_chr`. To account for uncertainty in population projections and `r output_params_ls$tfd_stat_rate_chr %>% tolower()` rate parameters, this process was repeated `r output_params_ls$n_its_int` times, each time drawing different values from the probability distributions of these parameters. The parameter uncertainty that is explored by this process relates to population growth rates and `r output_params_ls$tfd_stat_rate_chr %>% tolower()` rates. Structural uncertainty relating to geometry simplifcation, the assumed uniform distribution of counts at spatial resolutions greater than that for which reported data were available and the selection of data sources was not explored. 
+
+\pagebreak
+
+# Results
+
+## Demographic Results
+The predicted population of `r output_params_ls$age_lower` to `r output_params_ls$age_upper` year olds resident in `r output_params_ls$meso2_name_chr` is summarised in the following nine tables and nine figures.
+
+### `r paste0(output_params_ls$tfd_start_date_chr, " Resident Population ", ifelse(output_params_ls$y0_prediction_lgl,"Predictions","Estimates"))`
+
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[1]]
+```
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_1}
+
+output_params_ls$output_plots_ls$Figure_1
+
+
+```
+
+\pagebreak
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[2]]
+```
+
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_2}
+output_params_ls$output_plots_ls$Figure_2
+```
+
+
+\pagebreak
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[3]]
+```
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_3}
+output_params_ls$output_plots_ls$Figure_3
+```
+
+\pagebreak
+
+### `r paste0(output_params_ls$tfd_end_date_chr, " Resident Population Predictions")`
+
+```{r echo=F, warning=F}
+ output_params_ls$output_tables_ls[[4]]
+```
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_4}
+output_params_ls$output_plots_ls$Figure_4
+```
+
+\pagebreak
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[5]]
+```
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_5}
+output_params_ls$output_plots_ls$Figure_5
+```
+
+\pagebreak
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[6]]
+```
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_6}
+output_params_ls$output_plots_ls$Figure_6
+```
+
+\pagebreak
+
+### `r paste0("Predicted Change in Resident Population Between ", output_params_ls$tfd_start_date_chr, " and ",output_params_ls$tfd_end_date_chr)`
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[7]]
+```
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_7}
+output_params_ls$output_plots_ls$Figure_7
+```
+
+
+\pagebreak
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[8]]
+```
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_8}
+output_params_ls$output_plots_ls$Figure_8
+```
+
+\pagebreak
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[9]]
+```
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_9}
+output_params_ls$output_plots_ls$Figure_9
+```
+
+\pagebreak
+
+## `r output_params_ls$tfd_stat_chr` Results
+The predicted `r output_params_ls$tfd_stat_chr %>% tolower()` amongst `r output_params_ls$age_lower` to `r output_params_ls$age_upper` year olds resident in `r output_params_ls$meso2_name_chr` is summarised in the next nine tables and nine figures.
+
+### `r paste0(output_params_ls$tfd_start_date_chr," ",output_params_ls$tfd_stat_chr, " Predictions")`
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[10]]
+```
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_10}
+output_params_ls$output_plots_ls$Figure_10
+```
+
+\pagebreak
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[11]]
+```
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_11}
+output_params_ls$output_plots_ls$Figure_11
+```
+
+\pagebreak
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[12]]
+```
+
+TEST TABLE
+
+```{r echo=F, warning=F}
+shock_output_params_ls$output_tables_ls[[12]]
+```
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_12}
+output_params_ls$output_plots_ls$Figure_12
+```
+
+\pagebreak
+
+### `r paste0(output_params_ls$tfd_end_date_chr," ",output_params_ls$tfd_stat_chr, " Predictions")`
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[13]]
+```
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_13}
+output_params_ls$output_plots_ls$Figure_13
+```
+
+\pagebreak
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[14]]
+```
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_14}
+output_params_ls$output_plots_ls$Figure_14
+```
+
+\pagebreak
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[15]]
+```
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_15}
+output_params_ls$output_plots_ls$Figure_15
+```
+
+\pagebreak
+
+### `r paste0("Predicted Change in "," ",output_params_ls$tfd_stat_chr," Between ", output_params_ls$tfd_start_date_chr, " and ",output_params_ls$tfd_end_date_chr)`
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[16]]
+```
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_16}
+output_params_ls$output_plots_ls$Figure_16
+```
+
+\pagebreak
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[17]]
+```
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_17}
+output_params_ls$output_plots_ls$Figure_17
+```
+
+\pagebreak
+
+```{r echo=F, warning=F}
+output_params_ls$output_tables_ls[[18]]
+```
+
+
+```{r echo=F, warning=F, fig.cap=output_params_ls$output_plots_titles_ls$Figure_18}
+output_params_ls$output_plots_ls$Figure_18
+```
+
+\pagebreak
+
+# Discussion
+The results presented in this report are produced by an algorithm that synthesises Australian geometry and spatial attribute data. Strengths of this automated approach include the relevance of the input data to the Australian context and using data at the highest available spatial resolution. However, there are also a number of limitations that users of this report should bear in mind when interpreting report results.
+
+First and most importantly, this report is produced by a development version of the Springtides App, which means both the application and its underlying model are only partially verified and validated. An updated version of the Springtides App will be released once user testing, code and input data verification and validation checks have been completed. Secondly, uncertainty is only partially explored and the true uncertainty of model outputs will be greater than that described in this report. Some model inputs currently only have deterministic values, structural uncertainty is not yet explored and to conserve computing resources we have restricted Springtides App users to running a maximum of 100 iterations of each simulation. We will be shortly addressing each of these constraints in a forthcoming development release as well as providing opportunities to explore structural uncertainty through selection of alternative evidence sources for a number of model parameters. Thirdly, epidemiology estimates are currently based on age and sex predictors only. Area attributes such as urbanicity and socioeconomic status will be added to the predictors in a forthcoming development version release.  
+
+# Contact
+You can help improve the Springtides App by reporting any suspected errors or providing usability feedback to the Springtides development team. Email: matthew.hamilton@orygen.org.au
+
