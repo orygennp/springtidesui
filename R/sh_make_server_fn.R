@@ -115,7 +115,7 @@ make_points_text_chr <- function(micro_chr_vec,
 #'  \code{\link[shiny]{reactive}},\code{\link[shiny]{reactiveValues}},\code{\link[shiny]{observeEvent}},\code{\link[shiny]{renderUI}},\code{\link[shiny]{tag}},\code{\link[shiny]{conditionalPanel}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{actionButton}},\code{\link[shiny]{checkboxGroupInput}},\code{\link[shiny]{wellPanel}},\code{\link[shiny]{textInput}},\code{\link[shiny]{radioButtons}},\code{\link[shiny]{downloadButton}},\code{\link[shiny]{downloadHandler}},\code{\link[shiny]{HTML}},\code{\link[shiny]{htmlOutput}},\code{\link[shiny]{dateRangeInput}},\code{\link[shiny]{renderPrint}},\code{\link[shiny]{reactiveValuesToList}}
 #'  \code{\link[leaflet]{leaflet}},\code{\link[leaflet]{setView}},\code{\link[leaflet]{addProviderTiles}},\code{\link[leaflet]{leafletProxy}},\code{\link[leaflet]{addControl}},\code{\link[leaflet]{removeControl}},\code{\link[leaflet]{leafletOutput}}
 #'  \code{\link[stringi]{stri_replace_all}}
-#'  \code{\link[ready4utils]{data_get}}
+#'  \code{\link[ready4fun]{get_from_lup}}
 #'  \code{\link[springtides]{filter_if_var_exists}},\code{\link[springtides]{get_input_vec}},\code{\link[springtides]{get_disorder_choices_chr_vec}},\code{\link[springtides]{get_age_range_choices_int_vec}},\code{\link[springtides]{subset_vec_if_var_exists}},\code{\link[springtides]{make_area_name_chr}},\code{\link[springtides]{tf_stat_chr}},\code{\link[springtides]{make_output_params_ls}},\code{\link[springtides]{get_input_ls}},\code{\link[springtides]{make_stat_choices_ls}}
 #'  \code{\link[purrr]{reduce}},\code{\link[purrr]{map}},\code{\link[purrr]{flatten}}
 #'  \code{\link[stringr]{str_sub}},\code{\link[stringr]{str_replace}}
@@ -131,7 +131,7 @@ make_points_text_chr <- function(micro_chr_vec,
 #' @importFrom shiny reactive reactiveValues observeEvent renderUI tagList conditionalPanel sliderInput p selectInput h3 actionButton checkboxGroupInput wellPanel textInput radioButtons downloadButton downloadHandler HTML uiOutput dateRangeInput renderPrint reactiveValuesToList
 #' @importFrom leaflet leaflet setView addProviderTiles providerTileOptions leafletProxy addPolygons highlightOptions clearShapes renderLeaflet
 #' @importFrom stringi stri_replace_last_fixed
-#' @importFrom ready4utils data_get
+#' @importFrom ready4fun get_from_lup
 #' @importFrom springtides filter_if_var_exists get_input_vec get_disorder_choices_chr_vec get_age_range_choices_int_vec subset_vec_if_var_exists make_area_name_chr tf_stat_chr make_output_params_ls get_input_ls make_stat_choices_ls
 #' @importFrom purrr reduce map_chr flatten_chr
 #' @importFrom stringr str_sub str_replace_all
@@ -324,7 +324,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                      dplyr::filter(year == input$meso2_bound_yr) %>%
                                      dplyr::pull(var_name))) %>%
           sort()
-        if(ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+        if(ready4fun::get_from_lup(pa_r4@lookup_tb@sp_abbreviations_lup,
                                  lookup_variable = "long_name",
                                  lookup_reference = input$meso2_type_chr,
                                  target_variable = "short_name",
@@ -353,7 +353,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
           meso2_type_tb <- pa_r4@lookup_tb@sp_data_pack_lup %>%
             dplyr::filter(main_feature == "Boundary") %>%
             dplyr::filter(area_type == input$meso2_type_chr %>%
-                            ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+                            ready4fun::get_from_lup(pa_r4@lookup_tb@sp_abbreviations_lup,
                                                   lookup_variable = "long_name",
                                                   lookup_reference = .,
                                                   target_variable = "short_name",
@@ -364,7 +364,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
             sort()
           meso2_uid_tb <- pa_r4@lookup_tb@sp_uid_lup %>%
             dplyr::filter(spatial_unit == input$meso2_type_chr %>%
-                            ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+                            ready4fun::get_from_lup(pa_r4@lookup_tb@sp_abbreviations_lup,
                                                   lookup_variable = "long_name",
                                                   lookup_reference = .,
                                                   target_variable = "short_name",
@@ -700,7 +700,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
                                                                  "XX1")) %>% ## ABSTRACT
                                  dplyr::pull(area_type) %>%
                                  unique() %>%
-                                 purrr::map_chr(~ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+                                 purrr::map_chr(~ready4fun::get_from_lup(pa_r4@lookup_tb@sp_abbreviations_lup,
                                                                        lookup_variable = "short_name",
                                                                        lookup_reference = .x,
                                                                        target_variable = "long_name",
@@ -760,7 +760,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
             if(is.null(input$meso2_type_chr)){
               meso2_type_chr <- NA_character_
             }else{
-              meso2_type_chr <- ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+              meso2_type_chr <- ready4fun::get_from_lup(pa_r4@lookup_tb@sp_abbreviations_lup,
                                                       lookup_variable = "long_name",
                                                       lookup_reference = input$meso2_type_chr,
                                                       target_variable = "short_name",
@@ -1034,7 +1034,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
 #         meso2_type_tb <- pa_r4@lookup_tb@sp_data_pack_lup %>%
 #           dplyr::filter(main_feature == "Boundary") %>%
 #           dplyr::filter(area_type == input$meso2_type_chr %>% #reactive_ls$meso2_type_chr %>%
-#                           ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+#                           ready4fun::get_from_lup(pa_r4@lookup_tb@sp_abbreviations_lup,
 #                                                 lookup_variable = "long_name",
 #                                                 lookup_reference = .,
 #                                                 target_variable = "short_name",
@@ -1045,7 +1045,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
 #           sort()
 #         meso2_uid_tb <- pa_r4@lookup_tb@sp_uid_lup %>%
 #           dplyr::filter(spatial_unit == input$meso2_type_chr %>% #reactive_ls$meso2_type_chr %>%
-#                           ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+#                           ready4fun::get_from_lup(pa_r4@lookup_tb@sp_abbreviations_lup,
 #                                                 lookup_variable = "long_name",
 #                                                 lookup_reference = .,
 #                                                 target_variable = "short_name",
@@ -1119,7 +1119,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
 #                                    dplyr::filter(year == input$meso2_bound_yr) %>%
 #                                    dplyr::pull(var_name))) %>%
 #         sort()
-#       if(ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+#       if(ready4fun::get_from_lup(pa_r4@lookup_tb@sp_abbreviations_lup,
 #                                lookup_variable = "long_name",
 #                                lookup_reference = input$meso2_type_chr,
 #                                target_variable = "short_name",
@@ -1229,7 +1229,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
 #                              dplyr::filter(!area_type %in% c("AUS","HSS","SA1","SA2","XX1")) %>%
 #                              dplyr::pull(area_type) %>%
 #                              unique() %>%
-#                              purrr::map_chr(~ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+#                              purrr::map_chr(~ready4fun::get_from_lup(pa_r4@lookup_tb@sp_abbreviations_lup,
 #                                                                    lookup_variable = "short_name",
 #                                                                    lookup_reference = .x,
 #                                                                    target_variable = "long_name",
@@ -1546,7 +1546,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
 #           if(is.null(input$meso2_type_chr)){
 #             meso2_type_chr <- NA_character_
 #           }else{
-#             meso2_type_chr <- ready4utils::data_get(pa_r4@lookup_tb@sp_abbreviations_lup,
+#             meso2_type_chr <- ready4fun::get_from_lup(pa_r4@lookup_tb@sp_abbreviations_lup,
 #                                                     lookup_variable = "long_name",
 #                                                     lookup_reference = input$meso2_type_chr,
 #                                                     target_variable = "short_name",

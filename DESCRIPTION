@@ -9,7 +9,6 @@ Authors@R: c(
     comment = c(ORCID = "0000-0001-5360-5888")), 
     person("Orygen", role = c("cph", "fnd")))
 Description: Functions to simulate the evolving epidemiology of a range of mental disorders affecting young people in Australia.
-Depends: R (>= 3.5.1)
 License: GPL-3 | file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -19,7 +18,7 @@ Imports:
     lubridate,
     magrittr,
     purrr,
-    ready4utils (>= 0.0.0.9070),
+    ready4fun (>= 0.0.0.9072),
     rlang,
     rmarkdown,
     shiny,
@@ -29,6 +28,6 @@ Imports:
     stringr,
     V8,
     leaflet
-Remotes: 
-    orygennp/ready4utils,
+Remotes:  
+    orygennp/ready4fun,
     orygennp/springtides

@@ -1,0 +1,200 @@
+---
+title: "Tables and Figures"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(pacman)
+p_load("dplyr", "tidyr","magrittr","reshape2", "ggplot2","gridExtra","grid", "data.table",  "kableExtra", "knitr",  "here","tidyselect","scales", "ggpubr" ,"Hmisc", "stringr", "psych", "arsenal", "lubridate", "corrplot","sjPlot","stargazer","rgdal","rmapshaper","ggspatial","cowplot", "magick","ggrepel","sf","ggtext","viridis") 
+
+```
+
+# Import data 
+
+```{r}
+sim_res_bc <- readRDS("sim_res_bc.RDS")
+sim_res_shock_only <- readRDS("sim_res_shock_only.RDS")
+```
+
+```{r}
+BC<- data.frame(Date=as.Date(character()),
+                 EOP=double(), 
+                 Prev=double())  
+
+for (i in 1: length(sim_res_bc)) {
+  
+  #Extract data
+  all<-sim_res_bc[[i]]$summary_tb %>% 
+    dplyr::select(starts_with("t0_2",ignore.case = F),
+                starts_with("ti_2",ignore.case = F),
+                starts_with("tx_2",ignore.case = F)) %>% 
+    gather(ID, N)
+  #process variable name 
+  all<-cbind(all,do.call("rbind", strsplit(all$ID, "_")))
+  #extract age and gender population estimate
+  pop<-all %>% 
+    filter(`3`!="prev")  %>% 
+    filter( `4`!="tl") %>% 
+    mutate(Date=ymd(as.numeric(as.character(`2`))),
+         Gender=`3`, Age=`4`,
+         EOP=N) %>% 
+    select(Date, Gender, Age, EOP )
+
+  #extract prevelance 
+  prev<-all %>% 
+    filter(`3`=="prev") %>% 
+    filter( `9`!="tl") %>% 
+    mutate(Date=ymd(as.numeric(as.character(`2`))),
+          Gender=`8`, Age=`9`,
+          Prev=N) %>% 
+    select(Date, Gender, Age, Prev )
+
+  #merge the two dataset 
+  all<-pop %>% 
+    left_join(prev) %>% 
+    group_by(Date) %>% 
+    summarise(EOP=sum(EOP),Prev=sum(Prev)) 
+ # merge back to master 
+BC<-rbind(BC,all)
+}
+
+Shock_only<- data.frame(Date=as.Date(character()),
+                 EOP=double(), 
+                 Prev=double()) 
+
+for (i in 1: length(sim_res_shock_only)) {
+  
+  #Extract data
+  all<-sim_res_shock_only[[i]]$summary_tb %>% 
+    dplyr::select(starts_with("t0_2",ignore.case = F),
+                starts_with("ti_2",ignore.case = F),
+                starts_with("tx_2",ignore.case = F)) %>% 
+    gather(ID, N)
+  #process variable name 
+  all<-cbind(all,do.call("rbind", strsplit(all$ID, "_")))
+  #extract age and gender population estimate
+  pop<-all %>% 
+    filter(`3`!="prev")  %>% 
+    filter( `4`!="tl") %>% 
+    mutate(Date=ymd(as.numeric(as.character(`2`))),
+         Gender=`3`, Age=`4`,
+         EOP=N) %>% 
+    select(Date, Gender, Age, EOP )
+
+  #extract prevelance 
+  prev<-all %>% 
+    filter(`3`=="prev") %>% 
+    filter( `9`!="tl") %>% 
+    mutate(Date=ymd(as.numeric(as.character(`2`))),
+          Gender=`8`, Age=`9`,
+          Prev=N) %>% 
+    select(Date, Gender, Age, Prev )
+
+  #merge the two dataset 
+  all<-pop %>% 
+    left_join(prev) %>% 
+    group_by(Date) %>% 
+    summarise(EOP=sum(EOP),Prev=sum(Prev)) 
+ # merge back to master 
+Shock_only<-rbind(Shock_only,all)
+}
+```
+
+##population rate 
+
+```{r}
+BC$Sim<-"Base case"
+Shock_only$Sim="COVID-19 shock"
+combined<-rbind(BC,Shock_only) %>% 
+  mutate(Rate=Prev/EOP) %>% 
+  group_by(Date,Sim) %>% 
+  summarise(Lower=quantile(Rate,probs = c(.05)),
+          Upper=quantile(Rate,probs = c(.95)),
+          Mean=mean(Rate))
+```
+
+
+```{r}
+
+g1<-ggplot(combined, ) + 
+  geom_line(aes(x = Date, y = Mean, color=Sim), stat = "smooth", method = "loess",size = 1.5) +
+  geom_line(aes(x = Date, y = Lower, color=Sim),stat = "smooth", method = "loess",size = 0.5) + 
+  geom_line(aes(x = Date, y = Upper, color=Sim),stat = "smooth", method = "loess",size = 0.5) + 
+  theme_bw()+ labs(x="Year", y="Population Rate") +
+  scale_color_manual(values=c("#999999", "#E69F00"))
+
+
+# build plot object for rendering 
+gg1 <- ggplot_build(g1)
+
+# extract data from the upper and lower lines
+df2 <- data.frame(x =  as.Date(gg1$data[[1]]$x ,origin = "1970-01-01"),
+                  ymin = gg1$data[[2]]$y,
+                  ymax = gg1$data[[3]]$y,
+                  Sim=gg1$data[[1]]$colour ) %>% 
+    mutate(Sim=ifelse(Sim=="#999999","Base case","COVID-19 shock"))
+
+# use the lm data to add the ribbon to the plot 
+g1 +  geom_ribbon(data = df2, aes(x = x, ymin = ymin, ymax = ymax,fill=Sim), alpha = 0.3) +
+  scale_fill_manual(values=c("#999999", "#E69F00")) +
+  labs(col="",fill="") +theme(legend.position = "bottom")
+
+```
+
+##population count 
+
+```{r}
+
+combined<-rbind(BC,Shock_only) %>% 
+  group_by(Date,Sim) %>% 
+  summarise(Lower=quantile(Prev/1000,probs = c(.05)),
+          Upper=quantile(Prev/1000,probs = c(.95)),
+          Mean=mean(Prev/1000))
+```
+
+
+```{r}
+
+g1<-ggplot(combined, ) + 
+  geom_line(aes(x = Date, y = Mean, color=Sim), stat = "smooth", method = "loess",size = 1.5) +
+  geom_line(aes(x = Date, y = Lower, color=Sim),stat = "smooth", method = "loess",size = 0.5) + 
+  geom_line(aes(x = Date, y = Upper, color=Sim),stat = "smooth", method = "loess",size = 0.5) + 
+  theme_bw()+ labs(x="Year", y="Population Count ('000)") +
+  scale_color_manual(values=c("#999999", "#E69F00"))
+
+
+# build plot object for rendering 
+gg1 <- ggplot_build(g1)
+
+# extract data from the upper and lower lines
+df2 <- data.frame(x =  as.Date(gg1$data[[1]]$x ,origin = "1970-01-01"),
+                  ymin = gg1$data[[2]]$y,
+                  ymax = gg1$data[[3]]$y,
+                  Sim=gg1$data[[1]]$colour ) %>% 
+    mutate(Sim=ifelse(Sim=="#999999","Base case","COVID-19 shock"))
+
+# use the lm data to add the ribbon to the plot 
+g1 +  geom_ribbon(data = df2, aes(x = x, ymin = ymin, ymax = ymax,fill=Sim), alpha = 0.3) +
+  scale_fill_manual(values=c("#999999", "#E69F00")) +
+  labs(col="",fill="") +theme(legend.position = "bottom")
+
+```
+
+
+Import shapefile 
+
+```{r}
+
+my_spdf <- readOGR( 
+  dsn= "1270055001_sa2_2016_aust_shape" , 
+  layer="SA2_2016_AUST",
+  verbose=FALSE
+)
+
+my_spdf<-ms_simplify(my_spdf)
+```
+

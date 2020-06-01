@@ -459,7 +459,7 @@ To explore the cost of mitigating the population health utility loss under this 
 #                     tb <- .x
 #                     col_chr <- target_cols_chr_vec[.y]
 #                     age_dbl <- target_age_chr_vec[.y]
-#                     RR_dbl <- ready4utils::data_get(RR_lup,
+#                     RR_dbl <- ready4fun::get_from_lup(RR_lup,
 #                                                     lookup_reference = age_dbl,
 #                                                     lookup_variable = "age_dbl",
 #                                                     target_variable = time_RR_chr,#"t0_RR"

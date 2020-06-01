@@ -36,7 +36,7 @@ if(interactive()){
  \code{\link[shiny]{reactive}},\code{\link[shiny]{reactiveValues}},\code{\link[shiny]{observeEvent}},\code{\link[shiny]{renderUI}},\code{\link[shiny]{tag}},\code{\link[shiny]{conditionalPanel}},\code{\link[shiny]{sliderInput}},\code{\link[shiny]{builder}},\code{\link[shiny]{selectInput}},\code{\link[shiny]{actionButton}},\code{\link[shiny]{checkboxGroupInput}},\code{\link[shiny]{wellPanel}},\code{\link[shiny]{textInput}},\code{\link[shiny]{radioButtons}},\code{\link[shiny]{downloadButton}},\code{\link[shiny]{downloadHandler}},\code{\link[shiny]{HTML}},\code{\link[shiny]{htmlOutput}},\code{\link[shiny]{dateRangeInput}},\code{\link[shiny]{renderPrint}},\code{\link[shiny]{reactiveValuesToList}}
  \code{\link[leaflet]{leaflet}},\code{\link[leaflet]{setView}},\code{\link[leaflet]{addProviderTiles}},\code{\link[leaflet]{leafletProxy}},\code{\link[leaflet]{addControl}},\code{\link[leaflet]{removeControl}},\code{\link[leaflet]{leafletOutput}}
  \code{\link[stringi]{stri_replace_all}}
- \code{\link[ready4utils]{data_get}}
+ \code{\link[ready4fun]{get_from_lup}}
  \code{\link[springtides]{filter_if_var_exists}},\code{\link[springtides]{get_input_vec}},\code{\link[springtides]{get_disorder_choices_chr_vec}},\code{\link[springtides]{get_age_range_choices_int_vec}},\code{\link[springtides]{subset_vec_if_var_exists}},\code{\link[springtides]{make_area_name_chr}},\code{\link[springtides]{tf_stat_chr}},\code{\link[springtides]{make_output_params_ls}},\code{\link[springtides]{get_input_ls}},\code{\link[springtides]{make_stat_choices_ls}}
  \code{\link[purrr]{reduce}},\code{\link[purrr]{map}},\code{\link[purrr]{flatten}}
  \code{\link[stringr]{str_sub}},\code{\link[stringr]{str_replace}}

@@ -37,9 +37,9 @@ out <- rmarkdown::render(paste0(temp_dir_chr,'/report.Rmd'),
                         envir = new.env())
 r_data_dir_chr <- "C:/Users/mahamilton/Desktop/Readyforwhatsnext/Data/R_Format"
 project_data_path_chr <- r_data_path_chr %>% stringr::str_replace("R_Format","Project")
-input <- list(report_format_chr = "Word",
+input <- list(report_format_chr = "PDF",
               user_name_chr = "Anonymous User")
-out <- rmarkdown::render('inst/COVID_report.Rmd',
+out <- rmarkdown::render('inst/report.Rmd',
                          switch(input$report_format_chr,
                                 PDF = rmarkdown::pdf_document(),
                                 HTML = rmarkdown::html_document(toc=T,
