@@ -159,6 +159,7 @@ make_basic_server_fn <- function(r_data_dir_chr,
           sf <- getPointsSf()
           sp_unit_var_chr <- "service_name"
         }
+        sf
         if(is.null(input$map_bounds)) {
           sf
         } else {
@@ -193,7 +194,8 @@ make_basic_server_fn <- function(r_data_dir_chr,
         shiny::req(input$meso2_bound_yr)
         shiny::req(input$meso2_type_chr)
           filtered_dp_lup <- pa_r4@lookup_tb@sp_data_pack_lup %>%
-            dplyr::filter(area_bound_yr == input$meso2_bound_yr)
+            dplyr::filter(area_bound_yr == input$meso2_bound_yr) %>%
+            dplyr::filter(data_type == "Geometry")
           ready4space::get_data(filtered_dp_lup,
                                 r_data_dir_chr = r_data_dir_chr,
                                 col_chr = "area_type",
