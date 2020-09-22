@@ -25,11 +25,11 @@ input <- list(area_name_chr = "Area Name",
 if(is.null(input$meso2_type_chr)){
   meso2_type_chr <- NA_character_
 }else{
-  meso2_type_chr <- ready4fun::get_from_lup(pa_r4@lookup_tb@sp_abbreviations_lup,
-                                          lookup_variable = "long_name",
-                                          lookup_reference = input$meso2_type_chr,
-                                          target_variable = "short_name",
-                                          evaluate = F)
+  meso2_type_chr <- ready4fun::get_from_lup_obj(pa_r4@lookup_tb@sp_abbreviations_lup,
+                                          match_var_nm_chr = "long_name",
+                                          match_value_xx = input$meso2_type_chr,
+                                          target_var_nm_chr = "short_name",
+                                          evaluate_lgl = F)
 }
 if(is.null(input$meso2_chr)){
   meso2_chr <- NA_character_

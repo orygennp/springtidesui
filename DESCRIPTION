@@ -12,22 +12,22 @@ Description: Functions to simulate the evolving epidemiology of a range of menta
 License: GPL-3 | file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Imports: 
     dplyr,
     lubridate,
     magrittr,
     purrr,
-    ready4fun (>= 0.0.0.9072),
+    ready4fun (>= 0.0.0.9223),
     rlang,
     rmarkdown,
     shiny,
     shinymanager,
     shinythemes,
-    springtides (>= 0.0.0.9302),
+    springtides (>= 0.0.0.9308),
     stringr,
     V8,
     leaflet
-Remotes:  
-    orygennp/ready4fun,
+Remotes: 
+    readyforwhatsnext/ready4fun,
     orygennp/springtides
